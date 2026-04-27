@@ -1,0 +1,4973 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image 2 Local Studio</title>
+    <style>
+      :root {
+        --bg: #f2ede4;
+        --panel: rgba(255, 252, 246, 0.9);
+        --ink: #1f1e1b;
+        --muted: #6d665d;
+        --line: rgba(33, 29, 24, 0.12);
+        --accent: #e86f51;
+        --accent-strong: #cf5334;
+        --accent-soft: rgba(232, 111, 81, 0.14);
+        --olive: #6f8464;
+        --olive-soft: rgba(111, 132, 100, 0.14);
+        --danger: #b9372d;
+        --shadow: 0 18px 44px rgba(40, 26, 10, 0.12);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --assistant-width: 340px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, rgba(232, 111, 81, 0.18), transparent 22%),
+          radial-gradient(circle at left center, rgba(111, 132, 100, 0.18), transparent 28%),
+          linear-gradient(180deg, #f7f2ea 0%, #ebe3d7 100%);
+        font-family: "Avenir Next", "Segoe UI Variable", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app-shell {
+        width: min(1680px, calc(100% - 24px));
+        margin: 22px auto;
+      }
+
+      .app-shell.assistant-collapsed {
+        --assistant-width: 0px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 14px;
+      }
+
+      .primary-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+
+      .primary-nav-button {
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(111, 132, 100, 0.22);
+        background: rgba(255, 255, 255, 0.74);
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 800;
+        transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, border-color 140ms ease;
+      }
+
+      .primary-nav-button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(232, 111, 81, 0.34);
+      }
+
+      .primary-nav-button.active {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(207, 83, 52, 0.22);
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+        letter-spacing: 0.02em;
+      }
+
+      .brand-block p,
+      .panel p,
+      .field small,
+      .preview-empty p,
+      .tips-list,
+      .form-note span {
+        color: var(--muted);
+      }
+
+      .brand-block p {
+        margin: 10px 0 0;
+      }
+
+      .eyebrow,
+      .brand-kicker {
+        display: inline-block;
+        margin-bottom: 10px;
+        color: var(--accent-strong);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .topbar-actions,
+      .preview-actions,
+      .history-toolbar,
+      .batch-actions,
+      .primary-actions,
+      .history-summary,
+      .preview-meta,
+      .meta-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .status-pill,
+      .model-badge,
+      .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(111, 132, 100, 0.3);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+      }
+
+      .meta-chip {
+        min-height: 32px;
+        padding: 0 10px;
+        background: var(--accent-soft);
+        border-color: transparent;
+        color: var(--accent-strong);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .meta-chip.olive {
+        background: var(--olive-soft);
+        color: #526148;
+      }
+
+      .status-pill.success {
+        border-color: rgba(88, 146, 92, 0.36);
+        background: rgba(111, 132, 100, 0.16);
+        color: #49624a;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .app-shell.guide-mode .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .content-main {
+        min-width: 0;
+        display: grid;
+        gap: 18px;
+      }
+
+      .assistant-rail {
+        position: fixed;
+        inset: 0 0 0 auto;
+        z-index: 85;
+        width: min(440px, calc(100vw - 20px));
+        padding: 18px 18px 18px 0;
+        display: block;
+        pointer-events: none;
+      }
+
+      .assistant-resize-handle {
+        display: none;
+        width: 12px;
+        border: 0;
+        padding: 0;
+        border-radius: 999px;
+        background:
+          linear-gradient(180deg, rgba(232, 111, 81, 0.3), rgba(111, 132, 100, 0.26)),
+          rgba(255, 255, 255, 0.5);
+        cursor: col-resize;
+      }
+
+      .assistant-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        background: rgba(18, 16, 13, 0.34);
+        backdrop-filter: blur(8px);
+      }
+
+      .panel,
+      .modal-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius-xl);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .panel::before,
+      .modal-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.36), transparent 32%);
+        pointer-events: none;
+      }
+
+      .control-panel,
+      .preview-panel,
+      .history-panel {
+        padding: 22px;
+      }
+
+      .panel-header,
+      .mini-panel-head,
+      .modal-head {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .control-form,
+      .config-form {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .field span {
+        font-weight: 700;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+        outline: none;
+        transition: border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .field textarea {
+        resize: vertical;
+        min-height: 168px;
+      }
+
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: rgba(232, 111, 81, 0.56);
+        box-shadow: 0 0 0 4px rgba(232, 111, 81, 0.14);
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .prompt-presets {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .preset-groups {
+        display: grid;
+        gap: 10px;
+      }
+
+      .preset-group {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.52);
+      }
+
+      .preset-group-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .preset-group-title {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-strong);
+      }
+
+      .preset-group-copy {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .generation-tabs {
+        display: none;
+      }
+
+      .generation-tab {
+        min-height: 44px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .generation-tab.active {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(207, 83, 52, 0.2);
+      }
+
+      .prompt-chip {
+        display: grid;
+        gap: 3px;
+        text-align: left;
+        border: 1px solid rgba(111, 132, 100, 0.28);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.74);
+        color: var(--ink);
+      }
+
+      .prompt-chip strong {
+        font-size: 13px;
+      }
+
+      .prompt-chip span {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+
+      .prompt-chip.small {
+        min-height: 56px;
+        padding: 8px 10px;
+        border-radius: 16px;
+      }
+
+      .prompt-chip:hover {
+        border-color: rgba(232, 111, 81, 0.4);
+      }
+
+      .prompt-chip:disabled {
+        opacity: 0.52;
+        cursor: not-allowed;
+      }
+
+      .option-preset {
+        font-weight: 700;
+      }
+
+      .primary-button,
+      .ghost-button,
+      .icon-button {
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+
+      .primary-button {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(207, 83, 52, 0.28);
+      }
+
+      .ghost-button,
+      .icon-button {
+        border-color: var(--line);
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--ink);
+      }
+
+      .ghost-button.success {
+        border-color: rgba(88, 146, 92, 0.48);
+        color: #49624a;
+        background: rgba(111, 132, 100, 0.12);
+      }
+
+      .assistant-toggle-button {
+        border-color: rgba(232, 111, 81, 0.28);
+        background: linear-gradient(135deg, rgba(232, 111, 81, 0.12), rgba(255, 255, 255, 0.88));
+        color: var(--accent-strong);
+        box-shadow: 0 10px 20px rgba(207, 83, 52, 0.08);
+        font-weight: 800;
+      }
+
+      .assistant-toggle-button::before {
+        content: "✦";
+        margin-right: 8px;
+      }
+
+      .ghost-button.danger {
+        color: var(--danger);
+        border-color: rgba(185, 55, 45, 0.22);
+      }
+
+      .primary-button:disabled,
+      .ghost-button:disabled {
+        opacity: 0.52;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .icon-button {
+        width: 44px;
+        padding: 0;
+        font-size: 24px;
+      }
+
+      .form-note,
+      .mini-panel,
+      .empty-history {
+        position: relative;
+        z-index: 1;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.55);
+      }
+
+      .form-note {
+        display: grid;
+        gap: 6px;
+      }
+
+      .assistant-panel {
+        padding: 22px;
+        min-height: 0;
+        height: calc(100vh - 36px);
+        position: relative;
+        overflow: auto;
+        transform: translateX(0);
+        transition: transform 240ms ease;
+        pointer-events: auto;
+      }
+
+      .app-shell.assistant-collapsed .assistant-panel {
+        transform: translateX(calc(100% + 24px));
+      }
+
+      .assistant-body {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 16px;
+      }
+
+      .assistant-section,
+      .history-note,
+      .image-input-panel {
+        position: relative;
+        z-index: 1;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.55);
+      }
+
+      .assistant-subtitle {
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+
+      .assistant-context-summary {
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(111, 132, 100, 0.22);
+        background: rgba(255, 255, 255, 0.74);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .test-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .ok-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(111, 132, 100, 0.16);
+        color: #49624a;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .assistant-actions,
+      .assistant-submit-row,
+      .assistant-output-actions,
+      .assistant-session-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .assistant-icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        min-width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--ink);
+      }
+
+      .assistant-icon-button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .assistant-preset-grid,
+      .file-chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .assistant-quick,
+      .file-chip,
+      .mode-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(111, 132, 100, 0.22);
+        background: rgba(255, 255, 255, 0.8);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .assistant-quick.is-active,
+      .mode-badge {
+        border-color: transparent;
+        background: var(--accent-soft);
+        color: var(--accent-strong);
+      }
+
+      .file-chip {
+        max-width: 100%;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .history-note {
+        margin-bottom: 16px;
+      }
+
+      .history-note p {
+        margin: 0;
+      }
+
+      .assistant-chat {
+        display: grid;
+        gap: 12px;
+        max-height: 48vh;
+        overflow: auto;
+      }
+
+      .assistant-empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 20px 12px;
+      }
+
+      .assistant-message {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .assistant-message.user {
+        background: rgba(111, 132, 100, 0.08);
+      }
+
+      .assistant-message.assistant {
+        background: rgba(232, 111, 81, 0.08);
+      }
+
+      .assistant-message-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .assistant-message-body {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.6;
+      }
+
+      .assistant-draft {
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(232, 111, 81, 0.18);
+        background: rgba(255, 255, 255, 0.76);
+        line-height: 1.6;
+      }
+
+      .field input[type="file"] {
+        padding: 12px 14px;
+      }
+
+      .custom-size-row.hidden {
+        display: none;
+      }
+
+      .progress-card {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(111, 132, 100, 0.24);
+        border-radius: var(--radius-lg);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(246, 240, 232, 0.78)),
+          radial-gradient(circle at top left, rgba(232, 111, 81, 0.08), transparent 42%);
+      }
+
+      .progress-head,
+      .progress-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .progress-head > div {
+        display: grid;
+        gap: 4px;
+      }
+
+      .progress-title {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-strong);
+      }
+
+      .progress-caption,
+      .progress-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .progress-value {
+        color: var(--accent-strong);
+        font-size: 14px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .progress-track {
+        position: relative;
+        overflow: hidden;
+        height: 12px;
+        border: 1px solid rgba(111, 132, 100, 0.22);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+      }
+
+      .progress-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--olive) 100%);
+        transition: width 220ms ease;
+      }
+
+      .progress-track.is-indeterminate .progress-fill {
+        width: 38%;
+        animation: progress-slide 1.2s ease-in-out infinite;
+      }
+
+      .progress-meta {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .progress-card[data-status="success"] .progress-value {
+        color: #526148;
+      }
+
+      .progress-card[data-status="success"] .progress-fill {
+        background: linear-gradient(135deg, var(--olive) 0%, #526148 100%);
+      }
+
+      .progress-card[data-status="error"] .progress-value {
+        color: var(--danger);
+      }
+
+      .progress-card[data-status="error"] .progress-fill {
+        background: linear-gradient(135deg, #e58c78 0%, var(--danger) 100%);
+      }
+
+      .mini-panel {
+        margin-top: 16px;
+      }
+
+      .mini-panel p {
+        margin: 8px 0 0;
+      }
+
+      .compact-details {
+        position: relative;
+        z-index: 1;
+        margin-top: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.55);
+        overflow: hidden;
+      }
+
+      .compact-details summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 800;
+      }
+
+      .compact-details summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .compact-details summary::after {
+        content: "+";
+        font-size: 18px;
+        color: var(--accent-strong);
+      }
+
+      .compact-details[open] summary::after {
+        content: "−";
+      }
+
+      .compact-details-body {
+        padding: 0 16px 16px;
+      }
+
+      .output-controls-panel .compact-details-body {
+        display: grid;
+        gap: 14px;
+      }
+
+      .output-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .output-controls-panel .field {
+        gap: 6px;
+      }
+
+      .output-controls-panel .field small {
+        display: none;
+      }
+
+      .output-hint-line {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .compact-summary-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .compact-summary-line strong {
+        color: var(--ink);
+      }
+
+      .tips-list {
+        margin: 10px 0 0;
+        padding-left: 18px;
+      }
+
+      .tips-list li + li {
+        margin-top: 10px;
+      }
+
+      .preview-panel {
+        min-height: 0;
+      }
+
+      .preview-control-band {
+        position: relative;
+        z-index: 1;
+        margin-top: 14px;
+      }
+
+      .preview-progress-inline {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 10px;
+        padding: 14px 16px;
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .preview-progress-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .preview-progress-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .preview-stage {
+        position: relative;
+        z-index: 1;
+        margin-top: 18px;
+        min-height: 560px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(250, 244, 235, 0.86)),
+          radial-gradient(circle at top left, rgba(111, 132, 100, 0.12), transparent 26%);
+      }
+
+      .preview-frame {
+        width: 100%;
+        min-height: 0;
+        padding: 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .preview-flip-card {
+        position: relative;
+        width: 100%;
+        min-height: min(72vh, 780px);
+        perspective: 1600px;
+      }
+
+      .preview-flip-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: inherit;
+        transform-style: preserve-3d;
+        transition: transform 560ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .preview-flip-card.flipped .preview-flip-inner {
+        transform: rotateY(180deg);
+      }
+
+      .preview-face {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 24px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(32, 24, 18, 0.06), rgba(32, 24, 18, 0.02)),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.42),
+            rgba(255, 255, 255, 0.42) 12px,
+            rgba(247, 240, 231, 0.42) 12px,
+            rgba(247, 240, 231, 0.42) 24px
+          );
+      }
+
+      .preview-face.back {
+        transform: rotateY(180deg);
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+      }
+
+      .preview-image-wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .preview-image-wrap img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 22px;
+        box-shadow: 0 18px 30px rgba(28, 20, 11, 0.18);
+        cursor: zoom-in;
+      }
+
+      .preview-sidecard {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 12px;
+        height: 100%;
+        overflow: auto;
+        padding: 18px;
+      }
+
+      .preview-sidecard p,
+      .preview-sidecard h3 {
+        margin: 0;
+      }
+
+      .preview-copy {
+        display: grid;
+        gap: 12px;
+      }
+
+      .preview-tools {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .preview-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .preview-empty {
+        text-align: center;
+        padding: 36px;
+      }
+
+      .history-panel {
+        min-height: 340px;
+      }
+
+      .guide-content-panel {
+        padding: 22px;
+      }
+
+      .guide-panel {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 16px;
+      }
+
+      .guide-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.58);
+      }
+
+      .guide-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .guide-list li + li {
+        margin-top: 8px;
+      }
+
+      .wizard-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 95;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(18, 16, 13, 0.42);
+        backdrop-filter: blur(10px);
+      }
+
+      .wizard-card {
+        width: min(960px, 100%);
+        padding: 24px;
+      }
+
+      .wizard-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .wizard-step {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .wizard-step p,
+      .wizard-step h3 {
+        margin: 0;
+      }
+
+      .wizard-step p {
+        margin-top: 10px;
+        color: var(--muted);
+      }
+
+      .history-head {
+        margin-bottom: 18px;
+      }
+
+      .history-toolbar input {
+        min-width: 280px;
+        padding: 12px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.75);
+      }
+
+      .history-summary {
+        position: relative;
+        z-index: 1;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .history-pagination {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 10px 0 18px;
+        flex-wrap: wrap;
+      }
+
+      .history-page-meta {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .history-stats {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .history-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 14px;
+      }
+
+      .history-card {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(32, 27, 22, 0.08);
+        background: rgba(255, 255, 255, 0.74);
+      }
+
+      .history-card.active {
+        border-color: rgba(232, 111, 81, 0.52);
+        box-shadow: 0 0 0 4px rgba(232, 111, 81, 0.12);
+      }
+
+      .history-card.selected {
+        background: rgba(232, 111, 81, 0.09);
+      }
+
+      .history-card img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 16px;
+        display: block;
+        background: rgba(32, 27, 22, 0.06);
+      }
+
+      .history-card-top,
+      .history-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .history-card-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .mini-action {
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .history-card-top input {
+        width: 18px;
+        height: 18px;
+      }
+
+      .history-title {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.4;
+      }
+
+      .history-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .card-link {
+        color: var(--accent-strong);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .empty-history {
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(18, 16, 13, 0.46);
+        backdrop-filter: blur(10px);
+      }
+
+      .modal-card {
+        width: min(720px, 100%);
+        padding: 24px;
+      }
+
+      .viewer-card {
+        width: min(1380px, calc(100vw - 40px));
+      }
+
+      .viewer-stage {
+        margin-top: 18px;
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(250, 244, 235, 0.82)),
+          radial-gradient(circle at top left, rgba(111, 132, 100, 0.12), transparent 26%);
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .viewer-canvas {
+        position: relative;
+        width: 100%;
+        height: min(78vh, 860px);
+        min-height: 460px;
+        overflow: hidden;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+      }
+
+      .viewer-canvas.is-dragging {
+        cursor: grabbing;
+      }
+
+      .viewer-canvas.is-dragging .viewer-image {
+        transition: none;
+      }
+
+      .viewer-image {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: block;
+        max-width: none;
+        max-height: none;
+        transform-origin: center center;
+        transition: transform 80ms ease;
+        box-shadow: 0 18px 36px rgba(28, 20, 11, 0.2);
+        border-radius: 18px;
+        will-change: transform;
+      }
+
+      .viewer-hint {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 60;
+        max-width: 380px;
+        padding: 14px 18px;
+        border-radius: 18px;
+        background: rgba(31, 30, 27, 0.94);
+        color: #fff;
+        box-shadow: 0 18px 34px rgba(12, 10, 7, 0.28);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @keyframes progress-slide {
+        0% {
+          transform: translateX(-140%);
+        }
+
+        100% {
+          transform: translateX(320%);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .content {
+          grid-template-columns: 1fr;
+        }
+
+        .assistant-rail {
+          width: min(100vw, 100%);
+          padding: 0;
+        }
+
+        .assistant-resize-handle {
+          display: none;
+        }
+
+        .assistant-panel {
+          min-height: 0;
+          height: 100vh;
+          border-radius: 0;
+        }
+
+        .preview-frame {
+          padding: 16px;
+        }
+
+        .output-controls-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .wizard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          width: min(100% - 20px, 100%);
+          margin: 12px auto 20px;
+        }
+
+        .topbar {
+          flex-direction: column;
+        }
+
+        .primary-nav {
+          gap: 8px;
+        }
+
+        .control-panel,
+        .preview-panel,
+        .history-panel,
+        .assistant-panel,
+        .modal-card {
+          padding: 18px;
+          border-radius: 22px;
+        }
+
+        .field-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .history-toolbar input {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .history-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .assistant-chat {
+          max-height: 36vh;
+        }
+
+        .viewer-canvas {
+          min-height: 340px;
+        }
+
+        .output-controls-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <span class="brand-kicker">OpenAI Image Tool</span>
+          <h1>Image 2 Local Studio</h1>
+          <p>单文件版。配置保存在浏览器，本地历史保存在 IndexedDB，导出时下载或写入你手选的文件夹。</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="status-pill" id="statusPill">等待配置</div>
+          <button class="ghost-button assistant-toggle-button" id="toggleAssistantButton" type="button">展开助手</button>
+          <button class="ghost-button" id="openConfigButton" type="button">连接设置</button>
+        </div>
+      </header>
+
+      <nav class="primary-nav" id="primaryNav">
+        <button class="primary-nav-button active" type="button" data-primary-tab="text">文生图</button>
+        <button class="primary-nav-button" type="button" data-primary-tab="edit">图生图 / 局部改图</button>
+        <button class="primary-nav-button" type="button" data-primary-tab="guide">配置说明</button>
+      </nav>
+
+      <main class="workspace">
+        <aside class="panel control-panel">
+          <section class="panel-header">
+            <div>
+              <span class="eyebrow">Generation</span>
+              <h2>生成参数</h2>
+            </div>
+            <div class="model-badge">固定模型：gpt-image-2</div>
+          </section>
+
+          <form id="generateForm" class="control-form">
+            <div class="generation-tabs" id="generationTabs">
+              <button class="generation-tab active" type="button" data-generation-tab="text">文生图</button>
+              <button class="generation-tab" type="button" data-generation-tab="edit">图生图 / 局部改图</button>
+            </div>
+
+            <label class="field">
+              <span>提示词</span>
+              <textarea
+                id="promptInput"
+                name="prompt"
+                placeholder="例如：一只橘猫坐在沙发上，午后自然光，胶片质感，构图干净。"
+                rows="8"
+                required
+              ></textarea>
+            </label>
+
+            <div class="form-note">
+              <strong id="generationModeLabel">当前模式：文生图</strong>
+              <span id="generationModeDetail">未上传参考图，将直接按提示词从零生成。</span>
+            </div>
+
+            <section class="image-input-panel hidden" id="imageInputPanel">
+              <div class="mini-panel-head">
+                <div>
+                  <span class="eyebrow">Image To Image</span>
+                  <h3>参考图与局部改图</h3>
+                </div>
+              </div>
+
+              <label class="field">
+                <span>参考图 / 原图（可多选）</span>
+                <input id="referenceImagesInput" type="file" accept="image/*" multiple />
+                        <small>不上传就是文生图；上传后自动走图生图 / 改图接口。</small>
+              </label>
+
+                <div class="prompt-presets">
+                  <button class="ghost-button" type="button" id="useActiveImageButton">用当前预览图做参考</button>
+                  <button class="ghost-button" type="button" id="clearReferenceImagesButton">清空参考图</button>
+                </div>
+
+              <div class="file-chip-list" id="referenceImagesSummary">
+                <span class="file-chip">当前没有参考图</span>
+              </div>
+
+              <label class="field">
+                <span>蒙版（可选）</span>
+                <input id="maskImageInput" type="file" accept="image/*" />
+                <small>做局部修改时用；通常需要和原图同尺寸并带透明通道。</small>
+              </label>
+
+              <div class="prompt-presets">
+                <button class="ghost-button" type="button" id="clearMaskImageButton">清空蒙版</button>
+              </div>
+
+              <div class="file-chip-list" id="maskImageSummary">
+                <span class="file-chip">当前没有蒙版</span>
+              </div>
+            </section>
+
+            
+          </form>
+
+        </aside>
+
+        <section class="content">
+          <div class="content-main">
+            <section class="panel guide-content-panel hidden" id="guideContentPanel">
+              <div class="guide-panel">
+                <section class="guide-card">
+                  <span class="eyebrow">Quick Start</span>
+                  <h3>三步开始</h3>
+                  <ol class="guide-list">
+                    <li>右上角点 `连接设置`，填写接口地址和 Token。</li>
+                    <li>配置页里先点 `测试连接`，再点 `测试图片模型`，确认这组配置真的能用。</li>
+                    <li>回到 `文生图` 或 `图生图 / 局部改图` 导航开始生成，右上角助手只负责整理提示词。</li>
+                  </ol>
+                </section>
+
+                <section class="guide-card">
+                  <span class="eyebrow">Mode Guide</span>
+                  <h3>怎么选模式</h3>
+                  <ol class="guide-list">
+                    <li>`文生图`：从零开始，只有提示词，没有参考图。</li>
+                    <li>`图生图 / 局部改图`：你已经有参考图，想延续它的风格、构图或局部修改。</li>
+                    <li>历史区任何图片都可以一键放进图生图当参考。</li>
+                  </ol>
+                </section>
+
+                <section class="guide-card">
+                  <span class="eyebrow">Best Practice</span>
+                  <h3>推荐用法</h3>
+                  <ol class="guide-list">
+                    <li>先定左侧尺寸、质量和模式，再去右侧让助手写提示词，这样不会出现左边选 1080p、右边还写 4K 的冲突。</li>
+                    <li>如果只是试创意，先用 1K / standard；确定方向后再切到更高分辨率成片。</li>
+                    <li>历史区分页浏览，选中满意结果后可直接继续导出、删除或做图生图参考。</li>
+                  </ol>
+                  <div class="primary-actions">
+                    <button class="ghost-button" type="button" id="openConfigFromGuideButton">打开连接设置</button>
+                  </div>
+                </section>
+              </div>
+            </section>
+
+            <section class="panel preview-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">Preview</span>
+                  <h2>当前预览</h2>
+                </div>
+                <div class="preview-actions">
+                  <button class="ghost-button" type="button" id="flipPreviewButton">查看信息</button>
+                  <button class="ghost-button" type="button" id="reusePromptButton">复用提示词</button>
+                  <button class="ghost-button" type="button" id="copyMetaButton">复制信息</button>
+                </div>
+              </div>
+
+              <div class="preview-control-band">
+                <details class="compact-details output-controls-panel" id="outputControlsPanel" open>
+                  <summary>输出规格与生成</summary>
+                  <div class="compact-details-body">
+                    <div class="compact-summary-line" id="outputControlsSummary">
+                      <strong>当前输出</strong>
+                      <span>3840x2160 / standard / b64_json / 1 张</span>
+                    </div>
+
+                    <div class="output-controls-grid">
+                      <label class="field">
+                        <span>尺寸</span>
+                        <select id="sizeInput" name="size">
+                          <optgroup label="1K">
+                            <option value="1024x1024">1024x1024 · 方图 · 最快</option>
+                            <option value="1536x1024">1536x1024 · 横图</option>
+                            <option value="1024x1536">1024x1536 · 竖图</option>
+                          </optgroup>
+                          <optgroup label="2K">
+                            <option value="2048x2048">2048x2048 · 方图</option>
+                            <option value="2048x1152">2048x1152 · 横图</option>
+                          </optgroup>
+                          <optgroup label="4K">
+                            <option value="3840x2160" selected>3840x2160 · 横图 · 最慢</option>
+                            <option value="2160x3840">2160x3840 · 竖图 · 最慢</option>
+                          </optgroup>
+                          <optgroup label="Advanced">
+                            <option value="custom">自定义尺寸 / 全景尝试</option>
+                          </optgroup>
+                        </select>
+                        <div class="custom-size-row hidden" id="customSizeRow">
+                          <input id="customSizeInput" type="text" inputmode="text" placeholder="例如 4096x2048，仅在你的接口支持时有效" />
+                        </div>
+                      </label>
+
+                      <label class="field">
+                        <span>数量</span>
+                        <select id="countInput" name="n">
+                          <option value="1" selected>1 张</option>
+                          <option value="2">2 张</option>
+                          <option value="3">3 张</option>
+                          <option value="4">4 张</option>
+                          <option value="5">5 张</option>
+                          <option value="6">6 张</option>
+                          <option value="7">7 张</option>
+                          <option value="8">8 张</option>
+                          <option value="9">9 张</option>
+                          <option value="10">10 张</option>
+                        </select>
+                      </label>
+
+                      <label class="field">
+                        <span>质量</span>
+                        <select id="qualityInput" name="quality">
+                          <option value="standard">standard</option>
+                          <option value="medium">medium</option>
+                          <option value="hd">hd</option>
+                        </select>
+                      </label>
+
+                      <label class="field">
+                        <span>响应格式</span>
+                        <select id="responseFormatInput" name="response_format">
+                          <option value="b64_json">b64_json</option>
+                          <option value="url">url</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <p class="output-hint-line" id="sizeHelpText">
+                      常用尺寸已内置；数量范围 1 到 10。`standard` 最稳，`hd` 更慢更贵。`b64_json` 更适合本地历史和导出，`url` 返回更轻但不一定稳定。OpenAI 官方最新文档主要写的是 1024x1024、1536x1024、1024x1536 这类尺寸；4K、自定义尺寸和 360 全景通常要看你的接口提供方是否额外支持。
+                    </p>
+
+                    <div class="primary-actions">
+                      <button class="primary-button" type="button" id="generateButton">开始生成</button>
+                      <button class="ghost-button" type="button" id="resetPromptButton">清空提示词</button>
+                    </div>
+                  </div>
+                </details>
+              </div>
+
+              <section class="preview-progress-inline" id="progressCard">
+                <div class="preview-progress-head">
+                  <div>
+                    <strong class="progress-title">生成状态</strong>
+                    <span class="progress-caption">实时反映当前请求阶段</span>
+                  </div>
+                  <span class="progress-value" id="progressValue">待开始</span>
+                </div>
+
+                <div
+                  class="progress-track"
+                  id="progressTrack"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-valuetext="待开始"
+                >
+                  <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="preview-progress-meta">
+                  <span id="progressLabel">等待开始</span>
+                  <span id="progressElapsed">0s</span>
+                  <span id="progressDetail">服务端如果没有提供实时推理进度，这里只展示浏览器可以真实观测到的阶段。</span>
+                </div>
+              </section>
+
+              <div class="preview-stage" id="previewStage">
+                <div class="preview-empty">
+                  <h3>还没有图片</h3>
+                  <p>配置接口后开始生成。历史会直接保存在当前浏览器里。</p>
+                </div>
+              </div>
+
+              <div class="preview-meta" id="previewMeta"></div>
+            </section>
+
+            <section class="panel history-panel">
+              <div class="panel-header history-head">
+                <div>
+                  <span class="eyebrow">History</span>
+                  <h2>本地历史</h2>
+                </div>
+                <div class="history-toolbar">
+                  <input id="searchInput" type="search" placeholder="按提示词、尺寸、文件名搜索" />
+                  <button class="ghost-button" type="button" id="refreshHistoryButton">刷新</button>
+                </div>
+              </div>
+
+              <div class="history-note">
+                <p id="historyCacheNote">
+                  这里保存的是浏览器 IndexedDB 缓存，不在项目文件夹里，所以不能像普通图片目录一样直接打开。要落地成文件请导出；不需要时可以直接删除缓存。
+                </p>
+              </div>
+
+                <div class="history-summary">
+                  <div class="history-stats" id="historyStats">0 张图片</div>
+                  <div class="batch-actions">
+                    <button class="ghost-button" type="button" id="selectVisibleButton">全选当前筛选</button>
+                    <button class="ghost-button" type="button" id="clearSelectionButton">清空选择</button>
+                  <button class="ghost-button danger" type="button" id="deleteSelectedButton">删除所选</button>
+                  <button class="ghost-button danger" type="button" id="clearAllHistoryButton">清空全部缓存</button>
+                    <button class="primary-button" type="button" id="exportSelectedButton">导出所选</button>
+                  </div>
+                </div>
+
+                <div class="history-pagination" id="historyPagination"></div>
+
+                <div class="history-grid" id="historyGrid"></div>
+              </section>
+          </div>
+
+          <div class="assistant-rail">
+            <button class="assistant-resize-handle" type="button" id="assistantResizeHandle" aria-label="调整助手宽度"></button>
+
+            <aside class="panel assistant-panel" id="assistantPanel">
+              <div class="panel-header assistant-head">
+                <div>
+                  <span class="eyebrow">Prompt Copilot</span>
+                  <h2>提示词协作台</h2>
+                  <p class="assistant-subtitle">用自然语言描述你想要的画面，它会跟着当前尺寸、质量和模式整理成可直接提交的提示词。</p>
+                </div>
+                <div class="assistant-actions">
+                  <button class="assistant-icon-button" type="button" id="clearAssistantChatButton" aria-label="清空会话" title="清空会话">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"></path>
+                      <path d="M19 6l-1 13a2 2 0 0 1-2 1.8H8a2 2 0 0 1-2-1.8L5 6"></path>
+                      <line x1="10" y1="10" x2="10" y2="17"></line>
+                      <line x1="14" y1="10" x2="14" y2="17"></line>
+                    </svg>
+                  </button>
+                  <button class="assistant-icon-button" type="button" id="collapseAssistantButton" aria-label="收起助手" title="收起助手">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="assistant-body">
+                <section class="assistant-section">
+                  <label class="field">
+                    <span>样例模板 / 规格预设</span>
+                    <select id="assistantPresetSelect">
+                      <option value="">不套模板，按你的需求写</option>
+                    </select>
+                    <small>模板和规格已经合并到一个入口里。选中后会自动同步左侧参数或提示词，不需要来回找。</small>
+                  </label>
+                  <div class="assistant-context-summary" id="assistantContextSummary">
+                    当前识别：文生图 / 3840x2160 / standard / b64_json
+                  </div>
+                </section>
+
+                <details class="compact-details">
+                  <summary>运行建议与限制</summary>
+                  <div class="compact-details-body">
+                    <div class="form-note">
+                      <strong>当前建议</strong>
+                      <span id="runtimeHint">1024 方图最快；4K + `b64_json` 最慢，但最适合本地历史与导出。</span>
+                    </div>
+
+                    <div class="form-note">
+                      <strong>纯前端版限制</strong>
+                      <span id="responseFormatNote">推荐 `b64_json`。这样历史和导出都最稳定。`url` 模式在部分通道会遇到跨域，可能只能预览、不能持久化。</span>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="compact-details">
+                  <summary>本地保存与兼容性</summary>
+                  <div class="compact-details-body">
+                    <section class="mini-panel">
+                      <div class="mini-panel-head">
+                        <div>
+                          <span class="eyebrow">Storage</span>
+                          <h3>本地保存</h3>
+                        </div>
+                      </div>
+                      <p id="storageSummary">配置：浏览器本地存储</p>
+                      <p id="timeoutSummary">历史：IndexedDB</p>
+                      <p id="exportSummary">导出：下载文件 / 写入手选文件夹</p>
+                    </section>
+
+                    <section class="mini-panel">
+                      <div class="mini-panel-head">
+                        <div>
+                          <span class="eyebrow">Compatibility</span>
+                          <h3>使用前提</h3>
+                        </div>
+                      </div>
+                      <ul class="tips-list">
+                        <li><strong>接口必须允许浏览器直连</strong>，否则会被 CORS 拦住。</li>
+                        <li><strong>推荐 Chromium</strong>：可以手选文件夹后批量写入导出。</li>
+                        <li><strong>首次打开无依赖</strong>：直接双击 `index.html` 就能用。</li>
+                        <li><strong>503 测试连通</strong>：你给的那类后台检测逻辑不适用于图片模型，真实调用看本工具结果即可。</li>
+                      </ul>
+                    </section>
+                  </div>
+                </details>
+
+                <section class="assistant-section">
+                  <label class="field">
+                    <span>助手模型</span>
+                    <select id="assistantModelInput">
+                      <option value="gpt-5.5" selected>gpt-5.5</option>
+                      <option value="gpt-5.4">gpt-5.4</option>
+                      <option value="gpt-5.4-mini">gpt-5.4-mini</option>
+                    </select>
+                    <small id="assistantModelNote">默认先试 `gpt-5.5`；如果你的接口没开这个模型，可以直接切到 `gpt-5.4`。</small>
+                  </label>
+
+                  <label class="field">
+                    <span>你想要什么效果</span>
+                    <textarea
+                      id="assistantRequestInput"
+                      rows="5"
+                      placeholder="直接说人话也行，比如：我要哆啦A梦站在教室里，蓝白配色，阳光感，日系动画海报。用户明确写的名字不要替换成别的叫法。"
+                    ></textarea>
+                    <small>它会先理解你的真实需求，再结合左侧参数整理提示词。你明确写的名称、角色名、产品名不会被私自改写。</small>
+                  </label>
+
+                  <div class="assistant-submit-row">
+                    <button class="primary-button" type="button" id="assistantGenerateButton">一键写提示词</button>
+                    <button class="ghost-button" type="button" id="assistantPolishPromptButton">润色左侧提示词</button>
+                  </div>
+                </section>
+
+                <section class="assistant-section">
+                  <div class="assistant-session-head">
+                    <strong>临时对话</strong>
+                    <span>关掉页面就清空</span>
+                  </div>
+                  <div class="assistant-chat" id="assistantChat"></div>
+                </section>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="assistant-backdrop hidden" id="assistantBackdrop"></div>
+
+    <div class="wizard-backdrop hidden" id="welcomeWizard">
+      <div class="modal-card wizard-card">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">First Run</span>
+            <h2>第一次使用向导</h2>
+          </div>
+          <button class="icon-button" type="button" id="closeWizardButton" aria-label="关闭">×</button>
+        </div>
+
+        <div class="wizard-grid">
+          <section class="wizard-step">
+            <span class="eyebrow">Step 1</span>
+            <h3>先配接口</h3>
+            <p>点开连接设置，填好地址和 Token。你只要知道这两个，其他默认就够用。</p>
+          </section>
+
+          <section class="wizard-step">
+            <span class="eyebrow">Step 2</span>
+            <h3>先测能不能通</h3>
+            <p>在配置窗里先点文本连接测试，再点图片模型测试，确认不是地址或权限问题。</p>
+          </section>
+
+          <section class="wizard-step">
+            <span class="eyebrow">Step 3</span>
+            <h3>再选模式生成</h3>
+            <p>文生图适合从零开始；图生图适合拿参考图延续风格。右侧助手会自动跟随左侧参数。</p>
+          </section>
+        </div>
+
+        <div class="primary-actions" style="margin-top: 18px;">
+          <button class="primary-button" type="button" id="wizardOpenConfigButton">现在去配置</button>
+          <button class="ghost-button" type="button" id="wizardDismissButton">稍后再说</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="configModal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">Connection</span>
+            <h2>首次配置</h2>
+          </div>
+          <button class="icon-button" type="button" id="closeConfigButton" aria-label="关闭">×</button>
+        </div>
+
+        <form id="configForm" class="config-form">
+          <label class="field">
+            <span>API 地址</span>
+            <input id="apiBaseUrlInput" name="apiBaseUrl" placeholder="https://ruoli.dev 或 https://ruoli.dev/v1" required />
+            <small>支持填根地址、`/v1` 或完整 `/images/generations`。</small>
+            <small>如果你还没有可用接口，也可以通过这个兼容提供方申请一组：<a class="card-link" href="https://ruoli.dev/register?aff=8GLe" target="_blank" rel="noreferrer">ruoli.dev/register?aff=8GLe</a></small>
+          </label>
+
+          <label class="field">
+            <span>图片生成地址（可选）</span>
+            <input
+              id="imageGenerationEndpointInput"
+              name="imageGenerationEndpoint"
+              placeholder="https://ruoli.dev/v1/images/generations"
+            />
+            <small>默认按当前提供方示例填写为 `https://ruoli.dev/v1/images/generations`。如果你的中转不是这个路径，可以直接手动改成自己的完整图片生成地址。</small>
+          </label>
+
+          <label class="field">
+            <span>API Key</span>
+            <input id="apiKeyInput" name="apiKey" type="password" placeholder="sk-..." required />
+            <small>纯前端版会把 key 保存在浏览器本地，请只在你信任的机器上使用。`codex-team` 是令牌分组，不是额外请求参数。</small>
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>超时（秒）</span>
+              <input id="timeoutSecondsInput" name="timeoutSeconds" type="number" min="30" max="300" value="130" />
+              <small>建议 120 秒以上。</small>
+            </label>
+
+            <label class="field">
+              <span>默认响应格式</span>
+              <select id="defaultResponseFormatInput" name="defaultResponseFormat">
+                <option value="b64_json">b64_json</option>
+                <option value="url">url</option>
+              </select>
+              <small>`b64_json` 更适合本地历史。</small>
+            </label>
+          </div>
+
+          <div class="form-note">
+            <strong>注意</strong>
+            <span>如果上游接口不支持浏览器跨域访问，纯前端方案本身就没法直连，这不是页面能绕过的问题。</span>
+          </div>
+
+          <div class="form-note">
+            <strong>测试配置</strong>
+            <span id="configTestStatus">建议先点文本测试。通常 1 到 2 秒就能知道地址和 Token 是否可用；图片测试只会发一个最小请求。</span>
+            <div class="test-actions">
+              <button class="ghost-button" type="button" id="testConnectionButton">测试连接</button>
+              <span class="ok-badge hidden" id="testConnectionOk">OK</span>
+              <button class="ghost-button" type="button" id="testImageModelButton">测试图片模型</button>
+                <span class="ok-badge hidden" id="testImageModelOk">OK</span>
+              </div>
+            </div>
+
+          <div class="primary-actions">
+            <button class="primary-button" type="submit">保存配置</button>
+            <button class="ghost-button" type="button" id="cancelConfigButton">稍后再说</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop hidden" id="imageViewerModal">
+      <div class="modal-card viewer-card">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">Viewer</span>
+            <h2 id="viewerTitle">大图浏览</h2>
+          </div>
+          <div class="preview-actions">
+            <button class="ghost-button" type="button" id="fitViewerButton">适应窗口</button>
+            <button class="ghost-button" type="button" id="zoomActualButton">100%</button>
+            <button class="ghost-button" type="button" id="zoomOutButton">缩小</button>
+            <button class="ghost-button" type="button" id="zoomInButton">放大</button>
+            <span class="status-pill" id="zoomPercent">适应</span>
+            <button class="icon-button" type="button" id="closeViewerButton" aria-label="关闭">×</button>
+          </div>
+        </div>
+
+        <div class="viewer-stage" id="viewerStage">
+          <div class="viewer-canvas" id="viewerCanvas">
+            <img id="viewerImage" class="viewer-image" alt="" />
+          </div>
+        </div>
+        <p class="viewer-hint" id="viewerHint">滚轮缩放，按住拖动平移，双击可回到适应窗口。</p>
+      </div>
+    </div>
+
+    <div class="toast hidden" id="toast"></div>
+
+    <script>
+      const CONFIG_STORAGE_KEY = "image2-local-studio::config";
+      const FIRST_RUN_DISMISSED_KEY = "image2-local-studio::first-run-dismissed";
+      const DB_NAME = "image2-local-studio-db";
+      const DB_VERSION = 1;
+      const STORE_NAME = "images";
+
+      const promptPresets = [
+        {
+          title: "人物与角色",
+          copy: "适合人像、IP 角色、动漫海报",
+          items: [
+            { label: "电影感人像", hint: "柔光写真、肤色自然", prompt: "电影感人像，柔和侧光，肤色自然，浅景深，画面干净，构图稳定" },
+            { label: "动漫角色海报", hint: "主视觉、角色完整", prompt: "动漫角色主视觉海报，角色形象完整，色彩鲜明，动作自然，背景辅助叙事，海报感强" },
+            { label: "Q版角色", hint: "大头小身、亲和可爱", prompt: "Q版角色形象，可爱比例，大头小身体，表情友好，颜色鲜明，适合主视觉展示" },
+            { label: "儿童角色插画", hint: "明亮温暖、亲子感", prompt: "可爱儿童向角色插画，表情友好，轮廓清晰，色彩明亮，背景丰富但不杂乱" },
+          ],
+        },
+        {
+          title: "商业与产品",
+          copy: "适合海报、电商、产品展示",
+          items: [
+            { label: "产品海报", hint: "高级广告感、主角突出", prompt: "产品海报，极简构图，干净背景，高级质感，光影克制，主体突出" },
+            { label: "电商主图", hint: "白底清楚、适合卖货", prompt: "电商主图，主体居中，信息明确，白净背景，材质清晰，视觉干净利落" },
+            { label: "品牌 KV", hint: "统一氛围、适合宣传", prompt: "品牌视觉 KV，主视觉突出，氛围统一，层次分明，画面有高级广告感" },
+            { label: "场景化展示", hint: "产品放到真实场景", prompt: "产品场景化展示图，主体明确，环境辅助卖点，材质真实，光线自然，画面干净" },
+          ],
+        },
+        {
+          title: "空间与环境",
+          copy: "适合室内、场景、环境图",
+          items: [
+            { label: "室内家居", hint: "通透温暖、杂志感", prompt: "现代家居空间，晨光洒入，克制配色，杂志封面感，真实材质，空间通透" },
+            { label: "街景夜景", hint: "雨夜霓虹、反光氛围", prompt: "写实街景，雨夜霓虹，湿润反光，纪实摄影，层次丰富，氛围明显" },
+            { label: "国风插画", hint: "云雾层次、雅致配色", prompt: "国风插画，云雾氛围，细节丰富，层次分明，色彩雅致，画面完整" },
+            { label: "咖啡店空间", hint: "商业空间、氛围自然", prompt: "咖啡店室内空间，暖色自然光，材质真实，空间氛围舒适，适合商业展示" },
+          ],
+        },
+        {
+          title: "画幅与规格",
+          copy: "统一到同一套样例入口里",
+          items: [
+            { label: "极速预览", hint: "1K 方图，最快", mode: "option", size: "1024x1024", quality: "standard", responseFormat: "url", count: "1" },
+            { label: "均衡横图", hint: "2K 横图，常用", mode: "option", size: "2048x1152", quality: "standard", responseFormat: "b64_json", count: "1" },
+            { label: "4K 横版", hint: "成片保存", mode: "option", size: "3840x2160", quality: "standard", responseFormat: "b64_json", count: "1" },
+            { label: "4K 竖版", hint: "海报/封面", mode: "option", size: "2160x3840", quality: "standard", responseFormat: "b64_json", count: "1" },
+            { label: "360 全景尝试", hint: "自定义全景", mode: "option", size: "custom", customSize: "4096x2048", quality: "hd", responseFormat: "b64_json", count: "1" },
+          ],
+        },
+      ];
+
+      const sizeHints = {
+        "1024x1024": "1K 方图，通常最快，适合先试 prompt。",
+        "1536x1024": "1K 横图，适合封面、横版构图。",
+        "1024x1536": "1K 竖图，适合人像、海报。",
+        "2048x2048": "2K 方图，清晰度和速度更均衡。",
+        "2048x1152": "2K 横图，比较适合本地收藏和二次筛图。",
+        "3840x2160": "4K 横图，最慢，适合成片保存。",
+        "2160x3840": "4K 竖图，最慢，适合竖版海报。",
+        custom: "自定义尺寸只在你的接口提供方支持时有效；适合尝试全景图和超宽画幅。",
+      };
+
+      const PROMPT_ASSISTANT_SYSTEM_PROMPT = `
+你是一个给新手用户用的图片提示词助手。
+目标：把用户口语化需求改写成可以直接提交给图片模型的高质量提示词。
+默认用中文输出，语气直接、清晰、实用，不要讲空话。
+当用户信息不完整时，合理补全常见摄影/画面要素。
+如果用户明确写了角色名、产品名、品牌名、地名、作品名、IP 名称或专有名词，必须保留原词原写法，不能私自翻译、换称呼、改成近义词，也不能擅自泛化。
+例如用户写“哆啦A梦”，就保留“哆啦A梦”，不能改写成“机器猫”或“蓝色机器人猫”。
+必须严格服从用户当前界面里已经选好的尺寸、分辨率、质量和模式，不要在提示词里擅自写和当前设置冲突的词。
+如果当前尺寸不是 4K，就不要主动写“4K”“ultra high resolution 4K”之类的描述。
+如果当前选择的是 1K / 2K / 1080p / 自定义尺寸，就用与之匹配的表述，或者直接不写具体分辨率词。
+如果当前任务是图生图或局部改图，要在最终提示词里强调保留参考图的主体、构图、材质和光线关系，再描述需要修改的部分。
+如果当前任务可能是 360 全景图，要用 equirectangular 全景图思路组织提示词，强调完整环境包围感、首尾衔接、避免明显接缝。
+输出格式必须严格遵守：
+[PROMPT]
+一段可直接复制给图片模型的最终提示词
+[/PROMPT]
+[SHORT]
+一段更短、更好复制的精简版提示词
+[/SHORT]
+[TIPS]
+- 1 到 3 条非常短的补充建议
+[/TIPS]
+`;
+
+      const state = {
+        config: null,
+        history: [],
+        filteredItems: [],
+        selectedIds: new Set(),
+        activeId: null,
+        activeGenerationTab: "text",
+        activePrimaryTab: "text",
+        previewFlipped: false,
+        historyPage: 1,
+        historyPageSize: 6,
+        lastPresetLabel: "",
+        isGenerating: false,
+        generatingSince: 0,
+        generatingTimer: null,
+        viewerScale: 1,
+        viewerFitScale: 1,
+        viewerPanX: 0,
+        viewerPanY: 0,
+        viewerMode: "fit",
+        viewerNaturalWidth: 0,
+        viewerNaturalHeight: 0,
+        viewerDragging: false,
+        viewerPointerId: null,
+        viewerDragStartX: 0,
+        viewerDragStartY: 0,
+        viewerDragOriginX: 0,
+        viewerDragOriginY: 0,
+        referenceImageFiles: [],
+        maskImageFile: null,
+        assistantWidth: 340,
+        assistantCollapsed: false,
+        assistantMessages: [],
+        assistantIsLoading: false,
+        progress: {
+          status: "idle",
+          mode: "determinate",
+          value: 0,
+          valueText: "待开始",
+          label: "等待开始",
+          detail: "服务端如果没有提供实时推理进度，这里只展示浏览器可以真实观测到的阶段。",
+          elapsedSeconds: 0,
+        },
+      };
+
+      const elements = {};
+      let dbPromise = null;
+      let toastTimer = null;
+      let assistantResizeState = null;
+      let viewerTransformFrame = null;
+
+      document.addEventListener("DOMContentLoaded", () => {
+        collectElements();
+        renderPromptPresets();
+        bindEvents();
+        initialize().catch((error) => {
+          showToast(error.message || "初始化失败。");
+        });
+      });
+
+      function collectElements() {
+        elements.appShell = document.querySelector(".app-shell");
+        elements.statusPill = document.querySelector("#statusPill");
+        elements.toggleAssistantButton = document.querySelector("#toggleAssistantButton");
+        elements.openConfigButton = document.querySelector("#openConfigButton");
+        elements.primaryTabButtons = Array.from(document.querySelectorAll("[data-primary-tab]"));
+        elements.controlPanel = document.querySelector(".control-panel");
+        elements.previewPanel = document.querySelector(".preview-panel");
+        elements.historyPanel = document.querySelector(".history-panel");
+        elements.guideContentPanel = document.querySelector("#guideContentPanel");
+        elements.openConfigFromGuideButton = document.querySelector("#openConfigFromGuideButton");
+        elements.generateForm = document.querySelector("#generateForm");
+        elements.generationTabButtons = Array.from(document.querySelectorAll("[data-generation-tab]"));
+        elements.promptInput = document.querySelector("#promptInput");
+        elements.imageInputPanel = document.querySelector("#imageInputPanel");
+        elements.sizeInput = document.querySelector("#sizeInput");
+        elements.customSizeRow = document.querySelector("#customSizeRow");
+        elements.customSizeInput = document.querySelector("#customSizeInput");
+        elements.countInput = document.querySelector("#countInput");
+        elements.qualityInput = document.querySelector("#qualityInput");
+        elements.responseFormatInput = document.querySelector("#responseFormatInput");
+        elements.outputControlsPanel = document.querySelector("#outputControlsPanel");
+        elements.outputControlsSummary = document.querySelector("#outputControlsSummary");
+        elements.referenceImagesInput = document.querySelector("#referenceImagesInput");
+        elements.maskImageInput = document.querySelector("#maskImageInput");
+        elements.useActiveImageButton = document.querySelector("#useActiveImageButton");
+        elements.clearReferenceImagesButton = document.querySelector("#clearReferenceImagesButton");
+        elements.clearMaskImageButton = document.querySelector("#clearMaskImageButton");
+        elements.referenceImagesSummary = document.querySelector("#referenceImagesSummary");
+        elements.maskImageSummary = document.querySelector("#maskImageSummary");
+        elements.generationModeLabel = document.querySelector("#generationModeLabel");
+        elements.generationModeDetail = document.querySelector("#generationModeDetail");
+        elements.defaultResponseFormatInput = document.querySelector("#defaultResponseFormatInput");
+        elements.optionPresetButtons = Array.from(document.querySelectorAll(".option-preset"));
+        elements.responseFormatNote = document.querySelector("#responseFormatNote");
+        elements.runtimeHint = document.querySelector("#runtimeHint");
+        elements.generateButton = document.querySelector("#generateButton");
+        elements.resetPromptButton = document.querySelector("#resetPromptButton");
+        elements.progressCard = document.querySelector("#progressCard");
+        elements.progressTrack = document.querySelector("#progressTrack");
+        elements.progressFill = document.querySelector("#progressFill");
+        elements.progressValue = document.querySelector("#progressValue");
+        elements.progressLabel = document.querySelector("#progressLabel");
+        elements.progressElapsed = document.querySelector("#progressElapsed");
+        elements.progressDetail = document.querySelector("#progressDetail");
+        elements.previewStage = document.querySelector("#previewStage");
+        elements.previewMeta = document.querySelector("#previewMeta");
+        elements.flipPreviewButton = document.querySelector("#flipPreviewButton");
+        elements.reusePromptButton = document.querySelector("#reusePromptButton");
+        elements.copyMetaButton = document.querySelector("#copyMetaButton");
+        elements.historyGrid = document.querySelector("#historyGrid");
+        elements.historyStats = document.querySelector("#historyStats");
+        elements.historyPagination = document.querySelector("#historyPagination");
+        elements.historyCacheNote = document.querySelector("#historyCacheNote");
+        elements.searchInput = document.querySelector("#searchInput");
+        elements.refreshHistoryButton = document.querySelector("#refreshHistoryButton");
+        elements.selectVisibleButton = document.querySelector("#selectVisibleButton");
+        elements.clearSelectionButton = document.querySelector("#clearSelectionButton");
+        elements.deleteSelectedButton = document.querySelector("#deleteSelectedButton");
+        elements.clearAllHistoryButton = document.querySelector("#clearAllHistoryButton");
+        elements.exportSelectedButton = document.querySelector("#exportSelectedButton");
+        elements.storageSummary = document.querySelector("#storageSummary");
+        elements.timeoutSummary = document.querySelector("#timeoutSummary");
+        elements.exportSummary = document.querySelector("#exportSummary");
+        elements.assistantPanel = document.querySelector("#assistantPanel");
+        elements.assistantResizeHandle = document.querySelector("#assistantResizeHandle");
+        elements.collapseAssistantButton = document.querySelector("#collapseAssistantButton");
+        elements.clearAssistantChatButton = document.querySelector("#clearAssistantChatButton");
+        elements.assistantModelInput = document.querySelector("#assistantModelInput");
+        elements.assistantPresetSelect = document.querySelector("#assistantPresetSelect");
+        elements.assistantContextSummary = document.querySelector("#assistantContextSummary");
+        elements.assistantRequestInput = document.querySelector("#assistantRequestInput");
+        elements.assistantGenerateButton = document.querySelector("#assistantGenerateButton");
+        elements.assistantPolishPromptButton = document.querySelector("#assistantPolishPromptButton");
+        elements.assistantChat = document.querySelector("#assistantChat");
+        elements.assistantBackdrop = document.querySelector("#assistantBackdrop");
+        elements.compactSections = Array.from(document.querySelectorAll(".compact-details"));
+        elements.welcomeWizard = document.querySelector("#welcomeWizard");
+        elements.closeWizardButton = document.querySelector("#closeWizardButton");
+        elements.wizardOpenConfigButton = document.querySelector("#wizardOpenConfigButton");
+        elements.wizardDismissButton = document.querySelector("#wizardDismissButton");
+        elements.configModal = document.querySelector("#configModal");
+        elements.configForm = document.querySelector("#configForm");
+        elements.closeConfigButton = document.querySelector("#closeConfigButton");
+        elements.cancelConfigButton = document.querySelector("#cancelConfigButton");
+        elements.apiBaseUrlInput = document.querySelector("#apiBaseUrlInput");
+        elements.imageGenerationEndpointInput = document.querySelector("#imageGenerationEndpointInput");
+        elements.apiKeyInput = document.querySelector("#apiKeyInput");
+        elements.timeoutSecondsInput = document.querySelector("#timeoutSecondsInput");
+        elements.configTestStatus = document.querySelector("#configTestStatus");
+        elements.testConnectionButton = document.querySelector("#testConnectionButton");
+        elements.testImageModelButton = document.querySelector("#testImageModelButton");
+        elements.testConnectionOk = document.querySelector("#testConnectionOk");
+        elements.testImageModelOk = document.querySelector("#testImageModelOk");
+
+        elements.imageViewerModal = document.querySelector("#imageViewerModal");
+        elements.closeViewerButton = document.querySelector("#closeViewerButton");
+        elements.viewerCanvas = document.querySelector("#viewerCanvas");
+        elements.viewerImage = document.querySelector("#viewerImage");
+        elements.viewerTitle = document.querySelector("#viewerTitle");
+        elements.fitViewerButton = document.querySelector("#fitViewerButton");
+        elements.zoomActualButton = document.querySelector("#zoomActualButton");
+        elements.zoomOutButton = document.querySelector("#zoomOutButton");
+        elements.zoomInButton = document.querySelector("#zoomInButton");
+        elements.zoomPercent = document.querySelector("#zoomPercent");
+        elements.viewerHint = document.querySelector("#viewerHint");
+
+        elements.toast = document.querySelector("#toast");
+      }
+
+      function bindEvents() {
+        elements.toggleAssistantButton.addEventListener("click", () => toggleAssistant());
+        elements.openConfigButton.addEventListener("click", () => openConfigModal());
+        elements.openConfigFromGuideButton.addEventListener("click", () => openConfigModal());
+        elements.assistantBackdrop.addEventListener("click", () => toggleAssistant(true));
+        elements.closeWizardButton.addEventListener("click", () => dismissWizard());
+        elements.wizardDismissButton.addEventListener("click", () => dismissWizard());
+        elements.wizardOpenConfigButton.addEventListener("click", () => {
+          dismissWizard(false);
+          openConfigModal(true);
+        });
+        elements.closeConfigButton.addEventListener("click", () => closeConfigModal());
+        elements.cancelConfigButton.addEventListener("click", () => closeConfigModal());
+        elements.configModal.addEventListener("click", (event) => {
+          if (event.target === elements.configModal) {
+            closeConfigModal();
+          }
+        });
+
+        elements.configForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          saveConfig();
+        });
+
+        for (const input of [
+          elements.apiBaseUrlInput,
+          elements.imageGenerationEndpointInput,
+          elements.apiKeyInput,
+          elements.timeoutSecondsInput,
+          elements.defaultResponseFormatInput,
+        ]) {
+          input.addEventListener("input", resetConfigTestVisuals);
+          input.addEventListener("change", resetConfigTestVisuals);
+        }
+
+        elements.generateForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          generateImages();
+        });
+        elements.generateButton.addEventListener("click", () => generateImages());
+
+        elements.assistantPresetSelect.addEventListener("change", () => {
+          applyAssistantPresetSelection();
+        });
+
+        for (const button of elements.primaryTabButtons) {
+          button.addEventListener("click", () => {
+            switchPrimaryTab(button?.dataset?.primaryTab);
+          });
+        }
+
+        elements.flipPreviewButton.addEventListener("click", () => {
+          state.previewFlipped = !state.previewFlipped;
+          renderPreview();
+        });
+
+        for (const button of elements.generationTabButtons) {
+          button.addEventListener("click", () => {
+            switchGenerationTab(button?.dataset?.generationTab);
+          });
+        }
+
+        elements.resetPromptButton.addEventListener("click", () => {
+          elements.promptInput.value = "";
+          elements.promptInput.focus();
+        });
+
+        elements.referenceImagesInput.addEventListener("change", () => {
+          state.referenceImageFiles = Array.from(elements.referenceImagesInput.files || []);
+          updateReferenceInputs();
+          updateRuntimeHint();
+        });
+
+        elements.maskImageInput.addEventListener("change", () => {
+          state.maskImageFile = elements.maskImageInput.files?.[0] || null;
+          updateReferenceInputs();
+          updateRuntimeHint();
+        });
+
+        elements.useActiveImageButton.addEventListener("click", () => {
+          useActiveItemAsReference();
+        });
+
+        elements.clearReferenceImagesButton.addEventListener("click", () => {
+          clearReferenceImages();
+        });
+
+        elements.clearMaskImageButton.addEventListener("click", () => {
+          clearMaskImage();
+        });
+
+        elements.testConnectionButton.addEventListener("click", () => {
+          testConnection();
+        });
+
+        elements.testImageModelButton.addEventListener("click", () => {
+          testImageModel();
+        });
+
+        elements.reusePromptButton.addEventListener("click", () => {
+          const item = getActiveItem();
+          if (!item) {
+            showToast("当前没有可复用的图片。");
+            return;
+          }
+          elements.promptInput.value = item.prompt || "";
+          elements.promptInput.focus();
+          showToast("已把提示词放回输入框。");
+        });
+
+        elements.copyMetaButton.addEventListener("click", async () => {
+          const item = getActiveItem();
+          if (!item) {
+            showToast("当前没有可复制的图片信息。");
+            return;
+          }
+
+          const payload = [
+            `文件名：${item.fileName}`,
+            `尺寸：${item.size}`,
+            `质量：${item.quality}`,
+            `格式：${item.responseFormat}`,
+            `时间：${formatDate(item.createdAt)}`,
+            `提示词：${item.prompt}`,
+          ].join("\n");
+
+          copyText(payload, "图片信息已复制。");
+        });
+
+        elements.searchInput.addEventListener("input", () => {
+          filterHistory();
+          renderHistory();
+        });
+
+        elements.refreshHistoryButton.addEventListener("click", () => {
+          loadHistory();
+        });
+
+        elements.selectVisibleButton.addEventListener("click", () => {
+          for (const item of state.filteredItems) {
+            state.selectedIds.add(item.id);
+          }
+          renderHistory();
+        });
+
+        elements.clearSelectionButton.addEventListener("click", () => {
+          state.selectedIds.clear();
+          renderHistory();
+        });
+
+        elements.deleteSelectedButton.addEventListener("click", () => {
+          deleteSelected();
+        });
+
+        elements.clearAllHistoryButton.addEventListener("click", () => {
+          clearAllHistory();
+        });
+
+        elements.exportSelectedButton.addEventListener("click", () => {
+          exportSelected();
+        });
+
+        elements.responseFormatInput.addEventListener("change", updateResponseFormatNote);
+        elements.sizeInput.addEventListener("change", () => {
+          updateCustomSizeVisibility();
+          updateRuntimeHint();
+        });
+        elements.customSizeInput.addEventListener("input", updateRuntimeHint);
+        elements.qualityInput.addEventListener("change", updateRuntimeHint);
+        elements.countInput.addEventListener("change", updateRuntimeHint);
+        elements.responseFormatInput.addEventListener("change", updateRuntimeHint);
+
+        for (const button of elements.optionPresetButtons) {
+          button.addEventListener("click", () => applyOptionPreset(button));
+        }
+
+        elements.clearAssistantChatButton.addEventListener("click", () => {
+          state.assistantMessages = [];
+          renderAssistantChat();
+        });
+
+        elements.collapseAssistantButton.addEventListener("click", () => toggleAssistant(true));
+        elements.assistantGenerateButton.addEventListener("click", () => requestAssistantMessage("draft"));
+        elements.assistantPolishPromptButton.addEventListener("click", () => requestAssistantMessage("polish"));
+
+        elements.assistantChat.addEventListener("click", (event) => {
+          const actionButton = event.target.closest("[data-assistant-action]");
+          if (!actionButton) {
+            return;
+          }
+
+          const action = actionButton.dataset.assistantAction;
+          const index = Number(actionButton.dataset.messageIndex);
+          const message = state.assistantMessages[index];
+          if (!message) {
+            return;
+          }
+
+          if (action === "apply-prompt") {
+            elements.promptInput.value = message.prompt || message.shortPrompt || "";
+            elements.promptInput.focus();
+            showToast("已把助手生成的提示词填回左侧。");
+          } else if (action === "append-prompt") {
+            const addition = message.prompt || message.shortPrompt || "";
+            elements.promptInput.value = [elements.promptInput.value.trim(), addition].filter(Boolean).join("\n\n");
+            elements.promptInput.focus();
+            showToast("已把助手生成的提示词追加到左侧。");
+          } else if (action === "copy-prompt") {
+            copyText(message.prompt || message.shortPrompt || message.content, "提示词已复制。");
+          }
+        });
+
+        bindAssistantResize();
+
+        elements.closeViewerButton.addEventListener("click", () => closeImageViewer());
+        elements.fitViewerButton.addEventListener("click", () => fitViewerToStage(true));
+        elements.zoomActualButton.addEventListener("click", () => setViewerScale(1, { mode: "actual" }));
+        elements.zoomOutButton.addEventListener("click", () => setViewerScale(state.viewerScale - 0.25));
+        elements.zoomInButton.addEventListener("click", () => setViewerScale(state.viewerScale + 0.25));
+        elements.imageViewerModal.addEventListener("click", (event) => {
+          if (event.target === elements.imageViewerModal) {
+            closeImageViewer();
+          }
+        });
+        elements.viewerCanvas.addEventListener(
+          "wheel",
+          (event) => {
+            event.preventDefault();
+            const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+            zoomViewerAt(factor, event.clientX, event.clientY);
+          },
+          { passive: false },
+        );
+        elements.viewerCanvas.addEventListener("pointerdown", handleViewerPointerDown);
+        elements.viewerCanvas.addEventListener("pointermove", handleViewerPointerMove);
+        elements.viewerCanvas.addEventListener("pointerup", handleViewerPointerUp);
+        elements.viewerCanvas.addEventListener("pointercancel", handleViewerPointerUp);
+        elements.viewerCanvas.addEventListener("dblclick", () => fitViewerToStage(true));
+        elements.viewerImage.addEventListener("load", () => {
+          state.viewerNaturalWidth = elements.viewerImage.naturalWidth || 0;
+          state.viewerNaturalHeight = elements.viewerImage.naturalHeight || 0;
+          fitViewerToStage(true);
+        });
+
+        window.addEventListener("resize", () => {
+          if (!elements.imageViewerModal.classList.contains("hidden")) {
+            if (state.viewerMode === "fit") {
+              fitViewerToStage(false);
+            } else {
+              applyViewerTransform();
+            }
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            closeImageViewer();
+          }
+        });
+      }
+
+      function bindAssistantResize() {
+        elements.assistantResizeHandle.addEventListener("pointerdown", (event) => {
+          if (window.innerWidth <= 1200 || state.assistantCollapsed) {
+            return;
+          }
+
+          assistantResizeState = {
+            startX: event.clientX,
+            startWidth: elements.assistantPanel.getBoundingClientRect().width,
+          };
+
+          elements.assistantResizeHandle.setPointerCapture?.(event.pointerId);
+          document.addEventListener("pointermove", handleAssistantResizeMove);
+          document.addEventListener("pointerup", handleAssistantResizeUp, { once: true });
+        });
+      }
+
+      function handleAssistantResizeMove(event) {
+        if (!assistantResizeState) {
+          return;
+        }
+
+        const delta = assistantResizeState.startX - event.clientX;
+        const nextWidth = Math.min(560, Math.max(320, Math.round(assistantResizeState.startWidth + delta)));
+        state.assistantWidth = nextWidth;
+        elements.appShell.style.setProperty("--assistant-width", `${nextWidth}px`);
+      }
+
+      function handleAssistantResizeUp() {
+        assistantResizeState = null;
+        document.removeEventListener("pointermove", handleAssistantResizeMove);
+      }
+
+      function toggleAssistant(force) {
+        state.assistantCollapsed = typeof force === "boolean" ? force : !state.assistantCollapsed;
+        elements.appShell.classList.toggle("assistant-collapsed", state.assistantCollapsed);
+        elements.assistantBackdrop.classList.toggle("hidden", state.assistantCollapsed);
+        elements.toggleAssistantButton.textContent = state.assistantCollapsed ? "展开助手" : "收起助手";
+      }
+
+      function switchPrimaryTab(tab) {
+        const nextTab = ["text", "edit", "guide"].includes(tab) ? tab : "text";
+        state.activePrimaryTab = nextTab;
+
+        for (const button of elements.primaryTabButtons) {
+          button.classList.toggle("active", button?.dataset?.primaryTab === nextTab);
+        }
+
+        const showGuide = nextTab === "guide";
+        elements.appShell.classList.toggle("guide-mode", showGuide);
+        elements.controlPanel.classList.toggle("hidden", showGuide);
+        elements.previewPanel.classList.toggle("hidden", showGuide);
+        elements.historyPanel.classList.toggle("hidden", showGuide);
+        elements.guideContentPanel.classList.toggle("hidden", !showGuide);
+
+        if (nextTab === "text" || nextTab === "edit") {
+          switchGenerationTab(nextTab);
+        }
+      }
+
+      function openWizard() {
+        elements.welcomeWizard.classList.remove("hidden");
+      }
+
+      function dismissWizard(persist = true) {
+        elements.welcomeWizard.classList.add("hidden");
+        if (persist) {
+          localStorage.setItem(FIRST_RUN_DISMISSED_KEY, "1");
+        }
+      }
+
+      function switchGenerationTab(tab) {
+        const nextTab = tab === "edit" ? "edit" : "text";
+        state.activeGenerationTab = nextTab;
+
+        for (const button of elements.generationTabButtons) {
+          button.classList.toggle("active", button?.dataset?.generationTab === nextTab);
+        }
+
+        elements.imageInputPanel.classList.toggle("hidden", nextTab !== "edit");
+        updateReferenceInputs();
+        updateRuntimeHint();
+      }
+
+      function updateCustomSizeVisibility() {
+        const isCustom = elements.sizeInput.value === "custom";
+        elements.customSizeRow.classList.toggle("hidden", !isCustom);
+      }
+
+      function getSelectedSize() {
+        if (elements.sizeInput.value !== "custom") {
+          return elements.sizeInput.value.trim() || "3840x2160";
+        }
+
+        const custom = String(elements.customSizeInput.value || "").trim().toLowerCase();
+        if (!/^\d{2,5}x\d{2,5}$/.test(custom)) {
+          throw new Error("自定义尺寸格式不对，请写成例如 4096x2048。");
+        }
+        return custom;
+      }
+
+      function getGenerationMode() {
+        if (state.activeGenerationTab !== "edit") {
+          return {
+            id: "generate",
+            title: "文生图",
+            detail:
+              state.referenceImageFiles.length > 0 || state.maskImageFile
+                ? "当前处于文生图标签页，已暂时忽略参考图/蒙版；切回图生图标签页后会继续使用。"
+                : "当前处于文生图标签页，会直接按提示词从零生成。",
+          };
+        }
+
+        if (state.maskImageFile && state.referenceImageFiles.length === 0) {
+          return {
+            id: "mask-waiting-image",
+            title: "待补原图",
+            detail: "已经放了蒙版，但还缺原图/参考图；补上一张图后才能做局部改图。",
+          };
+        }
+
+        if (state.referenceImageFiles.length > 0 && state.maskImageFile) {
+          return {
+            id: "mask-edit",
+            title: "局部改图",
+            detail: `已上传 ${state.referenceImageFiles.length} 张参考图和 1 张蒙版，会优先走图片编辑接口。`,
+          };
+        }
+
+        if (state.referenceImageFiles.length > 0) {
+          return {
+            id: "image-edit",
+            title: "图生图",
+            detail: `已上传 ${state.referenceImageFiles.length} 张参考图，会按参考图继续生成。`,
+          };
+        }
+
+        return {
+          id: "edit-waiting-image",
+          title: "图生图待上传",
+          detail: "当前已切到图生图标签页，但还没上传参考图；放一张原图后再生成。",
+        };
+      }
+
+      function updateReferenceInputs() {
+        renderFileSummary(elements.referenceImagesSummary, state.referenceImageFiles, "当前没有参考图");
+        renderFileSummary(elements.maskImageSummary, state.maskImageFile ? [state.maskImageFile] : [], "当前没有蒙版");
+
+        const mode = getGenerationMode();
+        elements.generationModeLabel.textContent = `当前模式：${mode.title}`;
+        elements.generationModeDetail.textContent = mode.detail;
+        updateAssistantContextSummary();
+      }
+
+      function renderFileSummary(container, files, emptyText) {
+        container.innerHTML = "";
+        if (!files || files.length === 0) {
+          const chip = document.createElement("span");
+          chip.className = "file-chip";
+          chip.textContent = emptyText;
+          container.appendChild(chip);
+          return;
+        }
+
+        for (const file of files) {
+          const chip = document.createElement("span");
+          chip.className = "file-chip";
+          chip.textContent = `${file.name} · ${formatBytes(file.size || 0)}`;
+          container.appendChild(chip);
+        }
+      }
+
+      async function useActiveItemAsReference() {
+        const item = getActiveItem();
+        if (!item) {
+          showToast("当前没有可用作参考图的历史图片。");
+          return;
+        }
+
+        await useItemAsReference(item);
+      }
+
+      async function useItemAsReference(item) {
+        try {
+          const blob = await recordToBlob(item);
+          const fileName = sanitizeFileName(item.fileName || `reference-${item.id}.png`);
+          const file = new File([blob], fileName, { type: blob.type || item.mimeType || "image/png" });
+          state.referenceImageFiles = [file];
+          elements.referenceImagesInput.value = "";
+          switchGenerationTab("edit");
+          updateReferenceInputs();
+          updateRuntimeHint();
+          showToast("已把当前预览图放进参考图。");
+        } catch (error) {
+          showToast(error.message || "当前图片无法作为参考图。");
+        }
+      }
+
+      function clearReferenceImages() {
+        state.referenceImageFiles = [];
+        elements.referenceImagesInput.value = "";
+        updateReferenceInputs();
+        updateRuntimeHint();
+      }
+
+      function clearMaskImage() {
+        state.maskImageFile = null;
+        elements.maskImageInput.value = "";
+        updateReferenceInputs();
+        updateRuntimeHint();
+      }
+
+      function renderAssistantChat() {
+        elements.assistantChat.innerHTML = "";
+
+        if (state.assistantMessages.length === 0 && !state.assistantIsLoading) {
+          const empty = document.createElement("div");
+          empty.className = "assistant-empty";
+          empty.textContent = "把你想要的画面直接说出来就行。不会写提示词也没关系，右侧会帮你整理成能直接复制的版本。";
+          elements.assistantChat.appendChild(empty);
+          return;
+        }
+
+        state.assistantMessages.forEach((message, index) => {
+          const card = document.createElement("article");
+          card.className = `assistant-message ${message.role}`;
+
+          const head = document.createElement("div");
+          head.className = "assistant-message-head";
+          head.innerHTML = `<span>${message.role === "assistant" ? "Assistant" : "You"}</span><span>${formatDate(message.createdAt || new Date().toISOString(), true)}</span>`;
+          card.appendChild(head);
+
+          if (message.role === "assistant" && (message.prompt || message.shortPrompt)) {
+            const draft = document.createElement("div");
+            draft.className = "assistant-draft";
+            draft.textContent = message.prompt || message.shortPrompt;
+            card.appendChild(draft);
+          }
+
+          const body = document.createElement("div");
+          body.className = "assistant-message-body";
+          const assistantDetailText =
+            message.role === "assistant" && (message.shortPrompt || message.tips)
+              ? [
+                  message.shortPrompt ? `精简版：${message.shortPrompt}` : "",
+                  message.tips ? `补充建议：\n${message.tips}` : "",
+                ]
+                  .filter(Boolean)
+                  .join("\n\n")
+              : "";
+          body.textContent = message.displayContent || assistantDetailText || message.content;
+          card.appendChild(body);
+
+          if (message.role === "assistant") {
+            const actions = document.createElement("div");
+            actions.className = "assistant-output-actions";
+
+            for (const [action, label] of [
+              ["apply-prompt", "覆盖左侧"],
+              ["append-prompt", "追加到左侧"],
+              ["copy-prompt", "复制提示词"],
+            ]) {
+              const button = document.createElement("button");
+              button.type = "button";
+              button.className = action === "copy-prompt" ? "ghost-button" : "ghost-button";
+              button.dataset.assistantAction = action;
+              button.dataset.messageIndex = String(index);
+              button.textContent = label;
+              actions.appendChild(button);
+            }
+
+            card.appendChild(actions);
+          }
+
+          elements.assistantChat.appendChild(card);
+        });
+
+        if (state.assistantIsLoading) {
+          const loading = document.createElement("article");
+          loading.className = "assistant-message assistant";
+          loading.innerHTML = `
+            <div class="assistant-message-head"><span>Assistant</span><span>处理中</span></div>
+            <div class="assistant-message-body">正在根据当前模式、尺寸和参考图情况整理提示词…</div>
+          `;
+          elements.assistantChat.appendChild(loading);
+        }
+
+        elements.assistantChat.scrollTop = elements.assistantChat.scrollHeight;
+      }
+
+      async function requestAssistantMessage(mode) {
+        if (!state.config.apiBaseUrl || !state.config.apiKey) {
+          openConfigModal(true);
+          showToast("请先完成接口配置，提示词助手也要用到同一组地址和 Token。");
+          return;
+        }
+
+        const userMessage = buildAssistantUserMessage(mode);
+        if (!userMessage) {
+          return;
+        }
+
+        state.assistantMessages.push({
+          role: "user",
+          content: userMessage,
+          displayContent: getAssistantDisplayMessage(mode),
+          createdAt: new Date().toISOString(),
+        });
+        state.assistantIsLoading = true;
+        elements.assistantGenerateButton.disabled = true;
+        elements.assistantPolishPromptButton.disabled = true;
+        renderAssistantChat();
+
+        try {
+          const model = (elements.assistantModelInput.value || "gpt-5.5").trim();
+          const responseText = await requestAssistantText(model);
+          const parsed = parseAssistantBlocks(responseText);
+
+          state.assistantMessages.push({
+            role: "assistant",
+            content: responseText,
+            prompt: parsed.prompt,
+            shortPrompt: parsed.shortPrompt,
+            tips: parsed.tips,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (error) {
+          showToast(error.message || "提示词助手调用失败。");
+        } finally {
+          state.assistantIsLoading = false;
+          elements.assistantGenerateButton.disabled = false;
+          elements.assistantPolishPromptButton.disabled = false;
+          renderAssistantChat();
+        }
+      }
+
+      function buildAssistantUserMessage(mode) {
+        const request = elements.assistantRequestInput.value.trim();
+        const currentPrompt = elements.promptInput.value.trim();
+        if (mode === "draft" && !request) {
+          showToast("先在右侧用大白话描述一下你想要什么效果。");
+          elements.assistantRequestInput.focus();
+          return "";
+        }
+        if (mode === "polish" && !currentPrompt) {
+          showToast("左侧还没有提示词，没法润色。");
+          elements.promptInput.focus();
+          return "";
+        }
+
+        let size = "";
+        try {
+          size = getSelectedSize();
+        } catch {
+          size = elements.sizeInput.value === "custom" ? "自定义尺寸（待补全）" : elements.sizeInput.value;
+        }
+
+        const generationMode = getGenerationMode();
+        const outputProfile = describeSelectedOutputProfile(size, elements.qualityInput.value, elements.responseFormatInput.value);
+        return [
+          `任务：${mode === "polish" ? "润色当前左侧提示词" : "根据下面需求起草一个全新的提示词"}`,
+          `用户需求：${mode === "polish" ? request || "请在保留原意的基础上，让左侧提示词更完整、更好出图。" : request}`,
+          `左侧现有提示词：${currentPrompt || "（当前为空）"}`,
+          `最近选择的预设：${state.lastPresetLabel || "无"}`,
+          `图片模式：${generationMode.title}`,
+          `尺寸：${size}`,
+          `质量：${elements.qualityInput.value}`,
+          `数量：${elements.countInput.value}`,
+          `响应格式：${elements.responseFormatInput.value}`,
+          `输出要求摘要：${outputProfile}`,
+          `参考图数量：${state.referenceImageFiles.length}`,
+          `是否有蒙版：${state.maskImageFile ? "有" : "无"}`,
+          "重要：如果我在需求里明确写了角色名、品牌名、专有名词或作品名，请你保留原词，不要替换成别的叫法。",
+          "重要：最终提示词必须和当前尺寸/质量一致，不要在 1K、2K、1080p 或普通质量配置里擅自写成 4K 或超高清成片。",
+          "请按系统要求输出 `[PROMPT]`、`[SHORT]`、`[TIPS]` 三段。",
+        ].join("\n");
+      }
+
+      function describeSelectedOutputProfile(size, quality, responseFormat) {
+        const sizeText = String(size || "").toLowerCase();
+        let resolutionLabel = "当前所选分辨率";
+        if (sizeText === "3840x2160" || sizeText === "2160x3840") {
+          resolutionLabel = "4K";
+        } else if (sizeText === "2048x2048" || sizeText === "2048x1152") {
+          resolutionLabel = "2K";
+        } else if (sizeText === "1024x1024" || sizeText === "1536x1024" || sizeText === "1024x1536") {
+          resolutionLabel = "1K";
+        } else if (sizeText === "1920x1080" || sizeText === "1080x1920") {
+          resolutionLabel = "1080p";
+        }
+
+        return `${resolutionLabel} / ${size} / ${quality} / ${responseFormat}`;
+      }
+
+      function getAssistantDisplayMessage(mode) {
+        const request = elements.assistantRequestInput.value.trim();
+        if (mode === "polish") {
+          return request || `润色左侧提示词：${trimText(elements.promptInput.value.trim(), 120)}`;
+        }
+        return request;
+      }
+
+      async function requestAssistantText(model) {
+        const conversation = state.assistantMessages.slice(-8).map((message) => ({
+          role: message.role === "assistant" ? "assistant" : "user",
+          content: message.content,
+        }));
+        const fallbackModels = [model, "gpt-5.4", "gpt-5.4-mini"].filter(
+          (value, index, array) => value && array.indexOf(value) === index,
+        );
+        let lastError = null;
+
+        for (const candidateModel of fallbackModels) {
+          try {
+            const endpoint = normalizeResponsesEndpoint(state.config.apiBaseUrl);
+            const response = await fetchJsonWithTimeout(
+              endpoint,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${state.config.apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: candidateModel,
+                  instructions: PROMPT_ASSISTANT_SYSTEM_PROMPT,
+                  input: conversation.map((message) => ({
+                    role: message.role,
+                    content: [{ type: "input_text", text: message.content }],
+                  })),
+                }),
+              },
+              (state.config.timeoutSeconds || 130) * 1000,
+            );
+            if (candidateModel !== model) {
+              showToast(`提示词助手已自动降级到 ${candidateModel}。`);
+              elements.assistantModelInput.value = candidateModel;
+            }
+            return extractTextFromResponsesJson(response);
+          } catch (responseError) {
+            try {
+              const endpoint = normalizeChatCompletionsEndpoint(state.config.apiBaseUrl);
+              const response = await fetchJsonWithTimeout(
+                endpoint,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${state.config.apiKey}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: candidateModel,
+                    messages: [
+                      { role: "system", content: PROMPT_ASSISTANT_SYSTEM_PROMPT },
+                      ...conversation,
+                    ],
+                  }),
+                },
+                (state.config.timeoutSeconds || 130) * 1000,
+              );
+
+              if (candidateModel !== model) {
+                showToast(`提示词助手已自动降级到 ${candidateModel}。`);
+                elements.assistantModelInput.value = candidateModel;
+              }
+              return extractTextFromChatJson(response, responseError);
+            } catch (chatError) {
+              lastError = chatError;
+            }
+          }
+        }
+
+        throw lastError || new Error("提示词助手调用失败。");
+      }
+
+      async function requestAssistantProbe(config, model) {
+        const fallbackModels = [model, "gpt-5.4", "gpt-5.4-mini"].filter(
+          (value, index, array) => value && array.indexOf(value) === index,
+        );
+        let lastError = null;
+
+        for (const candidateModel of fallbackModels) {
+          try {
+            const endpoint = normalizeResponsesEndpoint(config.apiBaseUrl);
+            const response = await fetchJsonWithTimeout(
+              endpoint,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${config.apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: candidateModel,
+                  input: "只回复：OK",
+                  max_output_tokens: 12,
+                }),
+              },
+              config.timeoutSeconds * 1000,
+            );
+            return extractTextFromResponsesJson(response);
+          } catch (responseError) {
+            try {
+              const endpoint = normalizeChatCompletionsEndpoint(config.apiBaseUrl);
+              const response = await fetchJsonWithTimeout(
+                endpoint,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${config.apiKey}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: candidateModel,
+                    messages: [{ role: "user", content: "只回复：OK" }],
+                    max_tokens: 12,
+                  }),
+                },
+                config.timeoutSeconds * 1000,
+              );
+              return extractTextFromChatJson(response, responseError);
+            } catch (chatError) {
+              lastError = chatError;
+            }
+          }
+        }
+
+        throw lastError || new Error("文本连接测试失败。");
+      }
+
+      function parseAssistantBlocks(text) {
+        return {
+          prompt: extractTaggedBlock(text, "PROMPT"),
+          shortPrompt: extractTaggedBlock(text, "SHORT"),
+          tips: extractTaggedBlock(text, "TIPS"),
+        };
+      }
+
+      function extractTaggedBlock(text, tagName) {
+        const match = String(text || "").match(new RegExp(`\\[${tagName}\\]([\\s\\S]*?)\\[\\/${tagName}\\]`, "i"));
+        return match ? match[1].trim() : "";
+      }
+
+      function extractTextFromResponsesJson(json) {
+        if (typeof json?.output_text === "string" && json.output_text.trim()) {
+          return json.output_text.trim();
+        }
+
+        const chunks = [];
+        for (const item of Array.isArray(json?.output) ? json.output : []) {
+          for (const content of Array.isArray(item?.content) ? item.content : []) {
+            if (typeof content?.text === "string" && content.text.trim()) {
+              chunks.push(content.text.trim());
+            }
+          }
+        }
+
+        const text = chunks.join("\n\n").trim();
+        if (!text) {
+          throw new Error("提示词助手没有返回可读取的文本内容。");
+        }
+        return text;
+      }
+
+      function extractTextFromChatJson(json, fallbackError) {
+        const choice = json?.choices?.[0]?.message;
+        if (typeof choice?.content === "string" && choice.content.trim()) {
+          return choice.content.trim();
+        }
+
+        if (Array.isArray(choice?.content)) {
+          const text = choice.content
+            .map((part) => (typeof part?.text === "string" ? part.text : ""))
+            .filter(Boolean)
+            .join("\n\n")
+            .trim();
+          if (text) {
+            return text;
+          }
+        }
+
+        throw fallbackError || new Error("提示词助手没有返回可读取的文本内容。");
+      }
+
+      async function initialize() {
+        state.config = readConfig();
+        elements.appShell.style.setProperty("--assistant-width", `${state.assistantWidth}px`);
+        applyConfigToView({ syncGenerationForm: true });
+        resetConfigTestVisuals();
+        toggleAssistant(true);
+        switchPrimaryTab("text");
+        updateCustomSizeVisibility();
+        updateReferenceInputs();
+        renderAssistantChat();
+        renderGenerationProgress();
+        updateResponseFormatNote();
+        updateRuntimeHint();
+        await loadHistory();
+
+        if (!localStorage.getItem(FIRST_RUN_DISMISSED_KEY)) {
+          openWizard();
+        } else if (!state.config.apiBaseUrl || !state.config.apiKey) {
+          openConfigModal(true);
+        }
+      }
+
+      function getDb() {
+        if (dbPromise) {
+          return dbPromise;
+        }
+
+        dbPromise = new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: "id" });
+            }
+          };
+
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error || new Error("IndexedDB 打开失败。"));
+        });
+
+        return dbPromise;
+      }
+
+      async function withStore(mode, executor) {
+        const db = await getDb();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(STORE_NAME, mode);
+          const store = transaction.objectStore(STORE_NAME);
+          const result = executor(store, transaction);
+          transaction.oncomplete = () => resolve(result);
+          transaction.onerror = () => reject(transaction.error || new Error("数据库操作失败。"));
+          transaction.onabort = () => reject(transaction.error || new Error("数据库操作被中断。"));
+        });
+      }
+
+      async function putHistoryItems(items) {
+        await withStore("readwrite", (store) => {
+          for (const item of items) {
+            store.put(item);
+          }
+        });
+      }
+
+      async function getAllHistoryItems() {
+        const db = await getDb();
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction(STORE_NAME, "readonly");
+          const store = transaction.objectStore(STORE_NAME);
+          const request = store.getAll();
+          request.onsuccess = () => {
+            const items = Array.isArray(request.result) ? request.result : [];
+            items.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+            resolve(items);
+          };
+          request.onerror = () => reject(request.error || new Error("读取历史失败。"));
+        });
+      }
+
+      async function deleteHistoryItems(ids) {
+        await withStore("readwrite", (store) => {
+          for (const id of ids) {
+            store.delete(id);
+          }
+        });
+      }
+
+      function readConfig() {
+        const fallback = {
+          apiBaseUrl: "https://ruoli.dev/",
+          imageGenerationEndpoint: "https://ruoli.dev/v1/images/generations",
+          apiKey: "",
+          timeoutSeconds: 130,
+          defaultResponseFormat: "b64_json",
+        };
+
+        try {
+          const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
+          if (!raw) {
+            return fallback;
+          }
+          return { ...fallback, ...JSON.parse(raw) };
+        } catch {
+          return fallback;
+        }
+      }
+
+      function persistConfig(config) {
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
+      }
+
+      function syncConfigInputs() {
+        const config = state.config;
+        elements.apiBaseUrlInput.value = config.apiBaseUrl || "";
+        elements.imageGenerationEndpointInput.value = config.imageGenerationEndpoint || "https://ruoli.dev/v1/images/generations";
+        elements.apiKeyInput.value = config.apiKey || "";
+        elements.timeoutSecondsInput.value = config.timeoutSeconds || 130;
+        elements.defaultResponseFormatInput.value = config.defaultResponseFormat || "b64_json";
+      }
+
+      function applyConfigToView({ syncGenerationForm = false } = {}) {
+        const config = state.config;
+        elements.statusPill.textContent = config.apiBaseUrl && config.apiKey ? "连接已配置" : "等待配置";
+        elements.statusPill.classList.toggle("success", Boolean(config.apiBaseUrl && config.apiKey));
+        elements.timeoutSummary.textContent = `当前超时 ${config.timeoutSeconds || 130} 秒；重开页面后仍能看到图片，是因为浏览器缓存还在。`;
+        elements.exportSummary.textContent = "导出：下载文件 / 写入手选文件夹；若怕重复占空间，导出后可删除已选缓存。";
+        syncConfigInputs();
+        updateStorageSummary();
+
+        if (syncGenerationForm) {
+          elements.responseFormatInput.value = config.defaultResponseFormat || "b64_json";
+          updateResponseFormatNote();
+          updateRuntimeHint();
+        }
+      }
+
+      function updateStorageSummary() {
+        const totalBytes = state.history.reduce((sum, item) => sum + (Number(item.byteLength) || 0), 0);
+        elements.storageSummary.textContent =
+          `配置：localStorage；缓存：IndexedDB ${state.history.length} 条 / ${formatBytes(totalBytes)}；这不是系统图片文件夹。`;
+        elements.historyCacheNote.textContent =
+          `这里保存的是浏览器 IndexedDB 缓存，当前约 ${formatBytes(totalBytes)}。它不在项目文件夹里，所以不能像普通图片目录一样直接打开。要落地成文件请导出；不需要时可以直接删除缓存。`;
+      }
+
+      function openConfigModal(force = false) {
+        applyConfigToView();
+        elements.configModal.classList.remove("hidden");
+        elements.cancelConfigButton.classList.toggle("hidden", force);
+        elements.closeConfigButton.classList.toggle("hidden", force);
+      }
+
+      function closeConfigModal() {
+        if (!state.config.apiBaseUrl || !state.config.apiKey) {
+          return;
+        }
+        elements.configModal.classList.add("hidden");
+      }
+
+      function saveConfig() {
+        const apiBaseUrl = elements.apiBaseUrlInput.value.trim();
+        const imageGenerationEndpoint = elements.imageGenerationEndpointInput.value.trim();
+        const apiKey = elements.apiKeyInput.value.trim();
+        const timeoutSeconds = clampNumber(elements.timeoutSecondsInput.value, 30, 300, 130);
+        const defaultResponseFormat = elements.defaultResponseFormatInput.value;
+
+        if (!apiBaseUrl) {
+          showToast("API 地址不能为空。");
+          return;
+        }
+
+        if (!apiKey) {
+          showToast("API Key 不能为空。");
+          return;
+        }
+
+        state.config = {
+          apiBaseUrl,
+          imageGenerationEndpoint,
+          apiKey,
+          timeoutSeconds,
+          defaultResponseFormat,
+        };
+
+        persistConfig(state.config);
+        applyConfigToView({ syncGenerationForm: true });
+        elements.configModal.classList.add("hidden");
+        updateResponseFormatNote();
+        showToast("配置已保存到浏览器本地。");
+      }
+
+      function getDraftConfigFromInputs() {
+        return {
+          apiBaseUrl: elements.apiBaseUrlInput.value.trim(),
+          imageGenerationEndpoint: elements.imageGenerationEndpointInput.value.trim(),
+          apiKey: elements.apiKeyInput.value.trim(),
+          timeoutSeconds: clampNumber(elements.timeoutSecondsInput.value, 30, 300, 130),
+        };
+      }
+
+      function setConfigTestStatus(message) {
+        elements.configTestStatus.textContent = message;
+      }
+
+      function resetConfigTestVisuals() {
+        elements.testConnectionButton.classList.remove("success");
+        elements.testImageModelButton.classList.remove("success");
+        elements.testConnectionOk.classList.add("hidden");
+        elements.testImageModelOk.classList.add("hidden");
+        setConfigTestStatus("建议先点文本测试。通常 1 到 2 秒就能知道地址和 Token 是否可用；图片测试只会发一个最小请求。");
+      }
+
+      async function testConnection() {
+        const config = getDraftConfigFromInputs();
+        if (!config.apiBaseUrl || !config.apiKey) {
+          showToast("先把 API 地址和 Token 填完整再测试。");
+          return;
+        }
+
+        elements.testConnectionButton.disabled = true;
+        elements.testImageModelButton.disabled = true;
+        setConfigTestStatus("正在测试文本连接…");
+
+        try {
+          const model = elements.assistantModelInput?.value || "gpt-5.4";
+          const text = await requestAssistantProbe(config, model);
+          setConfigTestStatus(`文本连接正常：${trimText(text, 80)}`);
+          elements.testConnectionButton.classList.add("success");
+          elements.testConnectionOk.classList.remove("hidden");
+          showToast("连接测试通过。");
+        } catch (error) {
+          setConfigTestStatus(`连接测试失败：${error.message || error}`);
+          elements.testConnectionButton.classList.remove("success");
+          elements.testConnectionOk.classList.add("hidden");
+          showToast(error.message || "连接测试失败。");
+        } finally {
+          elements.testConnectionButton.disabled = false;
+          elements.testImageModelButton.disabled = false;
+        }
+      }
+
+      async function testImageModel() {
+        const config = getDraftConfigFromInputs();
+        if (!config.apiBaseUrl || !config.apiKey) {
+          showToast("先把 API 地址和 Token 填完整再测试。");
+          return;
+        }
+
+        elements.testConnectionButton.disabled = true;
+        elements.testImageModelButton.disabled = true;
+        setConfigTestStatus("正在测试图片模型，这会发送一次最小图片请求…");
+
+        try {
+          const endpoint = normalizeEndpoint(config.apiBaseUrl, config.imageGenerationEndpoint);
+          const response = await fetchJsonWithTimeout(
+            endpoint,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${config.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "gpt-image-2",
+                prompt: "minimal test image, simple geometric poster, clean background",
+                n: 1,
+                size: "1024x1024",
+                quality: "standard",
+                response_format: "url",
+              }),
+            },
+            config.timeoutSeconds * 1000,
+          );
+
+          const count = Array.isArray(response?.data) ? response.data.length : 0;
+          setConfigTestStatus(`图片模型可用：已收到 ${count || 1} 条结果。`);
+          elements.testImageModelButton.classList.add("success");
+          elements.testImageModelOk.classList.remove("hidden");
+          showToast("图片模型测试通过。");
+        } catch (error) {
+          setConfigTestStatus(`图片模型测试失败：${error.message || error}`);
+          elements.testImageModelButton.classList.remove("success");
+          elements.testImageModelOk.classList.add("hidden");
+          showToast(error.message || "图片模型测试失败。");
+        } finally {
+          elements.testConnectionButton.disabled = false;
+          elements.testImageModelButton.disabled = false;
+        }
+      }
+
+      async function loadHistory() {
+        state.history = await getAllHistoryItems();
+        state.historyPage = 1;
+        filterHistory();
+
+        if (!state.activeId && state.history[0]) {
+          state.activeId = state.history[0].id;
+          state.previewFlipped = false;
+        }
+
+        if (state.activeId && !state.history.some((item) => item.id === state.activeId)) {
+          state.activeId = state.history[0]?.id || null;
+          state.previewFlipped = false;
+        }
+
+        updateStorageSummary();
+        renderHistory();
+      }
+
+      function filterHistory() {
+        const keyword = elements.searchInput.value.trim().toLowerCase();
+        state.filteredItems = state.history.filter((item) => {
+          if (!keyword) {
+            return true;
+          }
+
+          return [item.prompt, item.size, item.fileName]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(keyword));
+        });
+        state.historyPage = 1;
+      }
+
+      function renderPromptPresets() {
+        elements.assistantPresetSelect.innerHTML = '<option value="">不套模板，按你的需求写</option>';
+        for (const group of promptPresets) {
+          for (const item of group.items) {
+            const option = document.createElement("option");
+            option.value = `${group.title}::${item.label}`;
+            option.textContent = `${group.title} / ${item.label}`;
+            elements.assistantPresetSelect.appendChild(option);
+          }
+        }
+      }
+
+      function applyAssistantPresetSelection() {
+        const value = elements.assistantPresetSelect.value;
+        if (!value) {
+          return;
+        }
+
+        const [groupTitle, itemLabel] = value.split("::", 2);
+        const group = promptPresets.find((entry) => entry.title === groupTitle);
+        const item = group?.items.find((entry) => entry.label === itemLabel);
+        if (!item) {
+          return;
+        }
+
+        if (item.mode === "option") {
+          applyOptionPreset(item);
+          elements.assistantRequestInput.focus();
+          return;
+        }
+
+        elements.promptInput.value = item.prompt;
+        elements.assistantRequestInput.value = item.prompt;
+        elements.promptInput.focus();
+        state.lastPresetLabel = item.label;
+        updateAssistantContextSummary();
+        showToast(`已应用模板：${item.label}`);
+      }
+
+      function updateResponseFormatNote() {
+        if (elements.responseFormatInput.value === "url") {
+          elements.responseFormatNote.textContent =
+            "你选了 `url`。这个通道实测可能返回远程 URL，也可能直接返回 `data:image/...`；通常更轻，但行为不一定固定。";
+        } else {
+          elements.responseFormatNote.textContent =
+            "推荐 `b64_json`。这样历史和导出都最稳定。`url` 模式在部分通道会遇到跨域，可能只能预览、不能持久化。";
+        }
+      }
+
+      function applyOptionPreset(button) {
+        const preset = button?.dataset ? {
+          size: button.dataset.size,
+          customSize: button.dataset.customSize,
+          quality: button.dataset.quality,
+          responseFormat: button.dataset.responseFormat,
+          count: button.dataset.count,
+          label: button.textContent.trim(),
+        } : button;
+
+        elements.sizeInput.value = preset.size;
+        if (preset.size === "custom") {
+          elements.customSizeInput.value = preset.customSize || "";
+        }
+        elements.qualityInput.value = preset.quality;
+        elements.responseFormatInput.value = preset.responseFormat;
+        elements.countInput.value = preset.count;
+        state.lastPresetLabel = preset.label || "";
+        updateCustomSizeVisibility();
+        updateResponseFormatNote();
+        updateRuntimeHint();
+        showToast(`已切到预设：${preset.label || "输出规格预设"}`);
+      }
+
+      function updateRuntimeHint() {
+        let size = elements.sizeInput?.value || "3840x2160";
+        if (size === "custom") {
+          size = String(elements.customSizeInput?.value || "custom").trim().toLowerCase() || "custom";
+        }
+        const quality = elements.qualityInput?.value || "standard";
+        const responseFormat = elements.responseFormatInput?.value || "b64_json";
+        const count = Number(elements.countInput?.value || 1);
+        const generationMode = getGenerationMode();
+
+        const parts = [sizeHints[size] || "当前尺寸可用。"];
+
+        if (quality === "hd") {
+          parts.push("`hd` 会明显更慢，适合最终成片。");
+        } else if (quality === "medium") {
+          parts.push("`medium` 是中档速度与质量。");
+        } else {
+          parts.push("`standard` 最稳，建议先出草图。");
+        }
+
+        if (responseFormat === "b64_json") {
+          parts.push("`b64_json` 更适合本地历史和导出。");
+        } else {
+          parts.push("`url` 返回体通常更轻，但不保证一定是远程 https 链接。");
+        }
+
+        if (count > 1) {
+          parts.push(`当前一次生成 ${count} 张，整体等待会更久。`);
+        }
+
+        if (generationMode.id === "image-edit") {
+          parts.push("当前会走图生图接口，结果会尽量参考你上传的原图。");
+        } else if (generationMode.id === "mask-edit") {
+          parts.push("当前会走局部改图接口，优先保留未蒙版区域。");
+        } else if (generationMode.id === "mask-waiting-image") {
+          parts.push("你已经放了蒙版，但还需要至少一张原图/参考图。");
+        } else if (generationMode.id === "edit-waiting-image") {
+          parts.push("当前是图生图标签页，请先上传参考图。");
+        }
+
+        elements.runtimeHint.textContent = parts.join(" ");
+        updateAssistantContextSummary();
+      }
+
+      function updateAssistantContextSummary() {
+        const generationMode = getGenerationMode();
+        let size = "";
+        try {
+          size = getSelectedSize();
+        } catch {
+          size = elements.sizeInput.value;
+        }
+
+        const parts = [
+          `当前识别：${generationMode.title}`,
+          `${size}`,
+          `${elements.qualityInput.value}`,
+          `${elements.responseFormatInput.value}`,
+          state.lastPresetLabel ? `最近模板：${state.lastPresetLabel}` : "最近模板：无",
+        ];
+        elements.assistantContextSummary.textContent = parts.join(" / ");
+        elements.outputControlsSummary.innerHTML =
+          `<strong>当前输出</strong><span>${size} / ${elements.qualityInput.value} / ${elements.responseFormatInput.value} / ${elements.countInput.value} 张</span>`;
+      }
+
+      function getGeneratingElapsedSeconds() {
+        if (state.generatingSince) {
+          return Math.max(1, Math.floor((Date.now() - state.generatingSince) / 1000));
+        }
+        return Math.max(0, state.progress.elapsedSeconds || 0);
+      }
+
+      function setGenerationProgress(next) {
+        state.progress = { ...state.progress, ...next };
+        if (typeof next.value === "number") {
+          state.progress.value = Math.min(100, Math.max(0, next.value));
+        }
+        renderGenerationProgress();
+      }
+
+      function renderGenerationProgress() {
+        const value = Math.min(100, Math.max(0, Number(state.progress.value) || 0));
+        const isDeterminate = state.progress.mode === "determinate";
+
+        elements.progressCard.dataset.status = state.progress.status;
+        elements.progressValue.textContent = state.progress.valueText;
+        elements.progressLabel.textContent = state.progress.label;
+        elements.progressDetail.textContent = state.progress.detail;
+        elements.progressElapsed.textContent = `${getGeneratingElapsedSeconds()}s`;
+        elements.progressTrack.classList.toggle("is-indeterminate", !isDeterminate);
+        elements.progressTrack.setAttribute("aria-busy", state.isGenerating ? "true" : "false");
+        elements.progressTrack.setAttribute("aria-valuetext", `${state.progress.label} ${state.progress.valueText}`);
+
+        if (isDeterminate) {
+          elements.progressFill.style.width = `${value}%`;
+          elements.progressTrack.setAttribute("aria-valuenow", String(Math.round(value)));
+        } else {
+          elements.progressFill.style.width = "38%";
+          elements.progressTrack.removeAttribute("aria-valuenow");
+        }
+      }
+
+      function setGenerationControlsDisabled(disabled) {
+        const controls = [
+          ...elements.generationTabButtons,
+          elements.promptInput,
+          elements.sizeInput,
+          elements.customSizeInput,
+          elements.countInput,
+          elements.qualityInput,
+          elements.responseFormatInput,
+          elements.referenceImagesInput,
+          elements.maskImageInput,
+          elements.useActiveImageButton,
+          elements.clearReferenceImagesButton,
+          elements.clearMaskImageButton,
+          elements.assistantPresetSelect,
+          elements.resetPromptButton,
+          ...elements.optionPresetButtons,
+        ];
+
+        for (const control of controls) {
+          if (control) {
+            control.disabled = disabled;
+          }
+        }
+      }
+
+      function startGeneratingTimer() {
+        stopGeneratingTimer();
+        state.progress.elapsedSeconds = 0;
+        state.generatingSince = Date.now();
+        renderGenerationProgress();
+        state.generatingTimer = window.setInterval(() => {
+          updateGeneratingState();
+        }, 1000);
+      }
+
+      function stopGeneratingTimer() {
+        if (state.generatingTimer) {
+          clearInterval(state.generatingTimer);
+          state.generatingTimer = null;
+        }
+        if (state.generatingSince) {
+          state.progress.elapsedSeconds = Math.max(1, Math.floor((Date.now() - state.generatingSince) / 1000));
+        }
+        state.generatingSince = 0;
+        renderGenerationProgress();
+      }
+
+      function normalizeEndpoint(baseUrl, imageGenerationEndpoint = "") {
+        const explicit = String(imageGenerationEndpoint || "").trim();
+        if (explicit) {
+          return explicit.replace(/\/+$/, "");
+        }
+
+        const trimmed = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!trimmed) {
+          throw new Error("请先填写 API 地址。");
+        }
+        if (/\/images\/generations$/i.test(trimmed)) {
+          return trimmed;
+        }
+        if (/\/v1$/i.test(trimmed)) {
+          return `${trimmed}/images/generations`;
+        }
+        return `${trimmed}/v1/images/generations`;
+      }
+
+      function normalizeEditsEndpoint(baseUrl, imageGenerationEndpoint = "") {
+        const explicit = String(imageGenerationEndpoint || "").trim().replace(/\/+$/, "");
+        if (explicit) {
+          if (/\/images\/edits$/i.test(explicit)) {
+            return explicit;
+          }
+          if (/\/images\/generations$/i.test(explicit)) {
+            return explicit.replace(/\/images\/generations$/i, "/images/edits");
+          }
+        }
+
+        const trimmed = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!trimmed) {
+          throw new Error("请先填写 API 地址。");
+        }
+        if (/\/images\/edits$/i.test(trimmed)) {
+          return trimmed;
+        }
+        if (/\/images\/generations$/i.test(trimmed)) {
+          return trimmed.replace(/\/images\/generations$/i, "/images/edits");
+        }
+        if (/\/v1$/i.test(trimmed)) {
+          return `${trimmed}/images/edits`;
+        }
+        return `${trimmed}/v1/images/edits`;
+      }
+
+      function normalizeResponsesEndpoint(baseUrl) {
+        const trimmed = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!trimmed) {
+          throw new Error("请先填写 API 地址。");
+        }
+        if (/\/images\/generations$/i.test(trimmed) || /\/images\/edits$/i.test(trimmed)) {
+          return trimmed.replace(/\/images\/(generations|edits)$/i, "/responses");
+        }
+        if (/\/responses$/i.test(trimmed)) {
+          return trimmed;
+        }
+        if (/\/v1$/i.test(trimmed)) {
+          return `${trimmed}/responses`;
+        }
+        return `${trimmed}/v1/responses`;
+      }
+
+      function normalizeChatCompletionsEndpoint(baseUrl) {
+        const trimmed = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!trimmed) {
+          throw new Error("请先填写 API 地址。");
+        }
+        if (/\/images\/generations$/i.test(trimmed) || /\/images\/edits$/i.test(trimmed)) {
+          return trimmed.replace(/\/images\/(generations|edits)$/i, "/chat/completions");
+        }
+        if (/\/responses$/i.test(trimmed)) {
+          return trimmed.replace(/\/responses$/i, "/chat/completions");
+        }
+        if (/\/chat\/completions$/i.test(trimmed)) {
+          return trimmed;
+        }
+        if (/\/v1$/i.test(trimmed)) {
+          return `${trimmed}/chat/completions`;
+        }
+        return `${trimmed}/v1/chat/completions`;
+      }
+
+      async function generateImages() {
+        if (state.isGenerating) {
+          return;
+        }
+
+        if (!state.config.apiBaseUrl || !state.config.apiKey) {
+          openConfigModal(true);
+          showToast("请先完成配置。");
+          return;
+        }
+
+        const prompt = elements.promptInput.value.trim();
+        if (!prompt) {
+          showToast("提示词不能为空。");
+          elements.promptInput.focus();
+          return;
+        }
+
+        let size = "";
+        try {
+          size = getSelectedSize();
+        } catch (error) {
+          showToast(error.message || "尺寸参数不合法。");
+          elements.customSizeInput.focus();
+          return;
+        }
+
+        const generationMode = getGenerationMode();
+        if (state.maskImageFile && state.referenceImageFiles.length === 0) {
+          showToast("要用蒙版局部改图，至少要先放一张原图/参考图。");
+          return;
+        }
+        if (generationMode.id === "edit-waiting-image") {
+          showToast("你已经切到图生图，但还没上传参考图。先放一张图再生成。");
+          return;
+        }
+
+        state.isGenerating = true;
+        startGeneratingTimer();
+
+        const payload = {
+          model: "gpt-image-2",
+          prompt,
+          n: clampNumber(elements.countInput.value, 1, 10, 1),
+          size,
+          quality: elements.qualityInput.value,
+          response_format: elements.responseFormatInput.value,
+        };
+
+        setGenerationProgress({
+          status: "running",
+          mode: "determinate",
+          value: 8,
+          valueText: "已就绪",
+          label: "参数校验完成",
+          detail: `${generationMode.title} · ${payload.n} 张 · ${payload.size} · ${payload.quality} · ${payload.response_format}`,
+          elapsedSeconds: 0,
+        });
+        updateGeneratingState();
+
+        try {
+          const isEditMode = generationMode.id === "image-edit" || generationMode.id === "mask-edit";
+          const endpoint = isEditMode
+            ? normalizeEditsEndpoint(state.config.apiBaseUrl, state.config.imageGenerationEndpoint)
+            : normalizeEndpoint(state.config.apiBaseUrl, state.config.imageGenerationEndpoint);
+          setGenerationProgress({
+            status: "running",
+            mode: "indeterminate",
+            valueText: "等待服务端",
+            label: isEditMode ? "编辑请求已发出" : "生成请求已发出",
+            detail: isEditMode
+              ? "已把提示词、参考图和可选蒙版发给服务端；如果上游没有实时百分比，这里只显示真实阶段。"
+              : "服务端生成阶段没有实时百分比时，这里只保持真实阶段状态，不做模拟倒计时。",
+          });
+
+          const requestOptions = isEditMode
+            ? {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${state.config.apiKey}`,
+                },
+                body: buildEditsFormData(payload),
+              }
+            : {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${state.config.apiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+              };
+
+          const response = await fetchJsonWithTimeout(
+            endpoint,
+            requestOptions,
+            (state.config.timeoutSeconds || 130) * 1000,
+            {
+              onResponseStart: ({ contentLength }) => {
+                if (contentLength > 0) {
+                  setGenerationProgress({
+                    status: "running",
+                    mode: "determinate",
+                    value: 0,
+                    valueText: "0%",
+                    label: "开始接收响应",
+                    detail: `响应总大小约 ${formatBytes(contentLength)}。`,
+                  });
+                  return;
+                }
+
+                setGenerationProgress({
+                  status: "running",
+                  mode: "indeterminate",
+                  valueText: "接收中",
+                  label: "开始接收响应",
+                  detail: "响应头没有提供总大小，无法显示下载百分比。",
+                });
+              },
+              onDownloadProgress: ({ received, total }) => {
+                if (total > 0) {
+                  const percent = Math.round((received / total) * 100);
+                  setGenerationProgress({
+                    status: "running",
+                    mode: "determinate",
+                    value: percent,
+                    valueText: `${percent}%`,
+                    label: "正在下载响应",
+                    detail: `已接收 ${formatBytes(received)} / ${formatBytes(total)}。`,
+                  });
+                  return;
+                }
+
+                setGenerationProgress({
+                  status: "running",
+                  mode: "indeterminate",
+                  valueText: "接收中",
+                  label: "正在下载响应",
+                  detail: `已接收 ${formatBytes(received)}，响应头未提供总大小。`,
+                });
+              },
+            },
+          );
+
+          const records = await convertResponseToRecords(response, payload, {
+            onItemsDiscovered: ({ total }) => {
+              setGenerationProgress({
+                status: "running",
+                mode: "determinate",
+                value: 0,
+                valueText: `0/${total}`,
+                label: "响应已收到，开始整理结果",
+                detail: `本次返回 ${total} 项，正在逐项转换成本地记录。`,
+              });
+            },
+            onItemStart: ({ index, total }) => {
+              const completed = Math.max(0, index - 1);
+              const percent = Math.round((completed / Math.max(1, total)) * 100);
+              setGenerationProgress({
+                status: "running",
+                mode: "determinate",
+                value: percent,
+                valueText: `${completed}/${total}`,
+                label: "正在整理图片结果",
+                detail: `正在处理第 ${index} / ${total} 项结果。`,
+              });
+            },
+            onItemComplete: ({ index, total, record }) => {
+              const percent = Math.round((index / Math.max(1, total)) * 100);
+              setGenerationProgress({
+                status: "running",
+                mode: "determinate",
+                value: percent,
+                valueText: `${index}/${total}`,
+                label: "正在整理图片结果",
+                detail: `已完成 ${index} / ${total}${record?.fileName ? `：${record.fileName}` : "。"}`,
+              });
+            },
+          });
+
+          setGenerationProgress({
+            status: "running",
+            mode: "indeterminate",
+            valueText: "写入中",
+            label: "正在写入本地历史",
+            detail: `共 ${records.length} 张图片，正在写入 IndexedDB。`,
+          });
+          await putHistoryItems(records);
+          state.history = [...records, ...state.history];
+          state.activeId = records[0]?.id || state.activeId;
+          state.previewFlipped = false;
+          state.historyPage = 1;
+          filterHistory();
+          renderHistory();
+          setGenerationProgress({
+            status: "success",
+            mode: "determinate",
+            value: 100,
+            valueText: "100%",
+            label: "生成完成",
+            detail: `已生成 ${records.length} 张图片，并保存到浏览器本地历史。`,
+          });
+          showToast(`已生成 ${records.length} 张图片，并保存到浏览器本地历史。`);
+        } catch (error) {
+          setGenerationProgress({
+            status: "error",
+            mode: "determinate",
+            value: state.progress.mode === "determinate" ? state.progress.value : 100,
+            valueText: "失败",
+            label: "生成失败",
+            detail: error.message || "生成失败。",
+          });
+          showToast(error.message || "生成失败。");
+        } finally {
+          state.isGenerating = false;
+          stopGeneratingTimer();
+          updateGeneratingState();
+          updateRuntimeHint();
+        }
+      }
+
+      function buildEditsFormData(payload) {
+        const formData = new FormData();
+        formData.append("model", payload.model);
+        formData.append("prompt", payload.prompt);
+        formData.append("n", String(payload.n));
+        formData.append("size", payload.size);
+        formData.append("quality", payload.quality);
+        formData.append("response_format", payload.response_format);
+
+        for (const file of state.referenceImageFiles) {
+          formData.append("image[]", file, file.name);
+        }
+
+        if (state.maskImageFile) {
+          formData.append("mask", state.maskImageFile, state.maskImageFile.name);
+        }
+
+        return formData;
+      }
+
+      async function fetchJsonWithTimeout(url, options, timeoutMs, hooks = {}) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const response = await fetch(url, { ...options, signal: controller.signal });
+          const contentLength = Number(response.headers.get("content-length")) || 0;
+          hooks.onResponseStart?.({ contentLength, status: response.status });
+          const text = await readResponseText(response, ({ received }) => {
+            hooks.onDownloadProgress?.({ received, total: contentLength });
+          });
+          const json = text ? JSON.parse(text) : {};
+
+          if (!response.ok) {
+            const message = json?.error?.message || json?.message || `HTTP ${response.status}`;
+            throw new Error(message);
+          }
+
+          return json;
+        } catch (error) {
+          if (error.name === "AbortError") {
+            throw new Error("请求超时，请把超时调到 120 秒以上。");
+          }
+
+          if (error instanceof SyntaxError) {
+            throw new Error("接口返回了非 JSON 内容。");
+          }
+
+          if (String(error.message || "").includes("Failed to fetch")) {
+            throw new Error("浏览器直连失败。大概率是 CORS 被上游拦截，纯前端版无法绕过这个限制。");
+          }
+
+          throw error;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      async function readResponseText(response, onChunk) {
+        if (!response.body || typeof response.body.getReader !== "function") {
+          return response.text();
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let received = 0;
+        let text = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          received += value.byteLength;
+          onChunk?.({ received });
+          text += decoder.decode(value, { stream: true });
+        }
+
+        text += decoder.decode();
+        return text;
+      }
+
+      async function convertResponseToRecords(response, requestPayload, hooks = {}) {
+        const items = Array.isArray(response.data) ? response.data : [];
+        if (items.length === 0) {
+          throw new Error("接口返回成功，但没有拿到图片数据。");
+        }
+
+        const createdAt = new Date().toISOString();
+        const batchId = crypto.randomUUID();
+        const records = [];
+        hooks.onItemsDiscovered?.({ total: items.length });
+
+        for (let index = 0; index < items.length; index += 1) {
+          const item = items[index];
+          const baseName = `${formatCompactDate(new Date())}-${batchId.slice(0, 8)}-${index + 1}`;
+          let record = null;
+          hooks.onItemStart?.({ index: index + 1, total: items.length, item });
+
+          if (item.b64_json) {
+            const mimeType = item.mime_type || "image/png";
+            const dataUrl = `data:${mimeType};base64,${item.b64_json}`;
+            const ext = mimeTypeToExtension(mimeType);
+            record = {
+              id: crypto.randomUUID(),
+              batchId,
+              createdAt,
+              model: "gpt-image-2",
+              prompt: requestPayload.prompt,
+              size: requestPayload.size,
+              quality: requestPayload.quality,
+              responseFormat: requestPayload.response_format,
+              fileName: `${baseName}.${ext}`,
+              mimeType,
+              byteLength: estimateBase64Bytes(item.b64_json),
+              revisedPrompt: item.revised_prompt || "",
+              previewSrc: dataUrl,
+              dataUrl,
+              remoteUrl: "",
+              persistent: true,
+              warning: "",
+            };
+          } else if (item.url) {
+            record = await convertUrlRecord(item, requestPayload, createdAt, batchId, baseName);
+          }
+
+          if (record) {
+            records.push(record);
+            hooks.onItemComplete?.({ index: records.length, total: items.length, item, record });
+          }
+        }
+
+        if (records.length === 0) {
+          throw new Error("接口返回了结果，但当前前端版没有识别到可用图片。");
+        }
+
+        return records;
+      }
+
+      async function convertUrlRecord(item, requestPayload, createdAt, batchId, baseName) {
+        if (String(item.url || "").startsWith("data:")) {
+          const blob = dataUrlToBlob(item.url);
+          const mimeType = blob.type || "image/png";
+          return {
+            id: crypto.randomUUID(),
+            batchId,
+            createdAt,
+            model: "gpt-image-2",
+            prompt: requestPayload.prompt,
+            size: requestPayload.size,
+            quality: requestPayload.quality,
+            responseFormat: requestPayload.response_format,
+            fileName: `${baseName}.${mimeTypeToExtension(mimeType)}`,
+            mimeType,
+            byteLength: blob.size,
+            revisedPrompt: item.revised_prompt || "",
+            previewSrc: item.url,
+            dataUrl: item.url,
+            remoteUrl: "",
+            persistent: true,
+            warning: "",
+          };
+        }
+
+        try {
+          const response = await fetch(item.url, { mode: "cors" });
+          const blob = await response.blob();
+          const dataUrl = await blobToDataUrl(blob);
+          const mimeType = blob.type || "image/png";
+          return {
+            id: crypto.randomUUID(),
+            batchId,
+            createdAt,
+            model: "gpt-image-2",
+            prompt: requestPayload.prompt,
+            size: requestPayload.size,
+            quality: requestPayload.quality,
+            responseFormat: requestPayload.response_format,
+            fileName: `${baseName}.${mimeTypeToExtension(mimeType)}`,
+            mimeType,
+            byteLength: blob.size,
+            revisedPrompt: item.revised_prompt || "",
+            previewSrc: dataUrl,
+            dataUrl,
+            remoteUrl: item.url,
+            persistent: true,
+            warning: "",
+          };
+        } catch {
+          return {
+            id: crypto.randomUUID(),
+            batchId,
+            createdAt,
+            model: "gpt-image-2",
+            prompt: requestPayload.prompt,
+            size: requestPayload.size,
+            quality: requestPayload.quality,
+            responseFormat: requestPayload.response_format,
+            fileName: `${baseName}.url.txt`,
+            mimeType: "text/plain",
+            byteLength: 0,
+            revisedPrompt: item.revised_prompt || "",
+            previewSrc: item.url,
+            dataUrl: "",
+            remoteUrl: item.url,
+            persistent: false,
+            warning: "URL 模式被跨域限制，当前只能保存远程链接，无法可靠导出。",
+          };
+        }
+      }
+
+      function updateGeneratingState() {
+        setGenerationControlsDisabled(state.isGenerating);
+        elements.generateButton.disabled = state.isGenerating;
+        if (state.isGenerating) {
+          const elapsed = getGeneratingElapsedSeconds();
+          elements.generateButton.textContent = `生成中 ${elapsed}s`;
+        } else {
+          elements.generateButton.textContent = "开始生成";
+        }
+        renderGenerationProgress();
+      }
+
+      function getActiveItem() {
+        return state.history.find((item) => item.id === state.activeId) || null;
+      }
+
+      function getAspectRatioFromSize(size) {
+        const match = String(size || "").match(/^(\d{2,5})x(\d{2,5})$/i);
+        if (!match) {
+          return "";
+        }
+        const width = Number(match[1]);
+        const height = Number(match[2]);
+        if (!width || !height) {
+          return "";
+        }
+        return `${width} / ${height}`;
+      }
+
+      function renderPreview() {
+        const item = getActiveItem();
+        elements.previewStage.innerHTML = "";
+        elements.previewMeta.innerHTML = "";
+        elements.flipPreviewButton.textContent = state.previewFlipped ? "返回图片" : "查看信息";
+
+        if (!item) {
+          const empty = document.createElement("div");
+          empty.className = "preview-empty";
+          empty.innerHTML = "<h3>还没有图片</h3><p>配置接口后开始生成。历史会直接保存在当前浏览器里。</p>";
+          elements.previewStage.appendChild(empty);
+          elements.flipPreviewButton.disabled = true;
+          return;
+        }
+
+        elements.flipPreviewButton.disabled = false;
+
+        const frame = document.createElement("div");
+        frame.className = "preview-frame";
+
+        const flipCard = document.createElement("div");
+        flipCard.className = `preview-flip-card${state.previewFlipped ? " flipped" : ""}`;
+
+        const flipInner = document.createElement("div");
+        flipInner.className = "preview-flip-inner";
+
+        const imageWrap = document.createElement("div");
+        imageWrap.className = "preview-image-wrap";
+        const aspectRatio = getAspectRatioFromSize(item.size);
+        if (aspectRatio) {
+          imageWrap.style.aspectRatio = aspectRatio;
+        }
+
+        if (item.mimeType.startsWith("image/") || item.previewSrc.startsWith("data:image") || /^https?:/i.test(item.previewSrc)) {
+          const image = document.createElement("img");
+          image.src = item.previewSrc;
+          image.alt = item.prompt || item.fileName;
+          image.title = "点击查看大图";
+          image.addEventListener("click", () => openImageViewer(item));
+          imageWrap.appendChild(image);
+        } else {
+          const placeholder = document.createElement("div");
+          placeholder.className = "preview-empty";
+          placeholder.innerHTML = "<h3>当前记录不是可直接预览的本地图像</h3><p>它只保存了远程 URL 信息。</p>";
+          imageWrap.appendChild(placeholder);
+        }
+
+        const front = document.createElement("div");
+        front.className = "preview-face front";
+        front.appendChild(imageWrap);
+
+        const side = document.createElement("div");
+        side.className = "preview-sidecard";
+        side.innerHTML = `
+          <div class="preview-copy">
+            <span class="eyebrow">Current Asset</span>
+            <h3>${escapeHtml(item.fileName)}</h3>
+            <p>${escapeHtml(item.prompt || "无提示词")}</p>
+            <div class="meta-row">
+              <span class="meta-chip">${escapeHtml(item.size)}</span>
+              <span class="meta-chip olive">${escapeHtml(item.quality)}</span>
+              <span class="meta-chip">${escapeHtml(item.responseFormat)}</span>
+            </div>
+            <p>时间：${escapeHtml(formatDate(item.createdAt))}</p>
+            <p>体积：${escapeHtml(formatBytes(item.byteLength))}</p>
+            <p>持久化：${item.persistent ? "已保存在浏览器本地" : "仅保存远程链接"}</p>
+            <p>${escapeHtml(item.revisedPrompt ? `改写提示词：${item.revisedPrompt}` : "改写提示词：上游未返回")}</p>
+            ${item.warning ? `<p>${escapeHtml(item.warning)}</p>` : ""}
+          </div>
+          <div class="preview-toggle-row">
+            <span class="meta-chip olive">背面信息卡</span>
+            <div class="preview-tools"></div>
+          </div>
+        `;
+
+        const toolWrap = side.querySelector(".preview-tools");
+        const useReferenceButton = document.createElement("button");
+        useReferenceButton.className = "ghost-button";
+        useReferenceButton.type = "button";
+        useReferenceButton.textContent = "作为图生图参考";
+        useReferenceButton.addEventListener("click", async () => {
+          await useItemAsReference(item);
+        });
+        toolWrap.appendChild(useReferenceButton);
+
+        if (item.remoteUrl) {
+          const link = document.createElement("a");
+          link.className = "ghost-button";
+          link.href = item.remoteUrl;
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.textContent = "打开远程地址";
+          toolWrap.appendChild(link);
+        }
+
+        const back = document.createElement("div");
+        back.className = "preview-face back";
+        back.appendChild(side);
+
+        flipInner.appendChild(front);
+        flipInner.appendChild(back);
+        flipCard.appendChild(flipInner);
+        frame.appendChild(flipCard);
+        elements.previewStage.appendChild(frame);
+
+        for (const chip of [
+          createChip(item.model),
+          createChip(`batch ${item.batchId.slice(0, 8)}`, true),
+          createChip(item.mimeType || "unknown"),
+          item.persistent ? createChip("IndexedDB", true) : createChip("url-only"),
+        ]) {
+          elements.previewMeta.appendChild(chip);
+        }
+      }
+
+      function renderHistory() {
+        elements.historyGrid.innerHTML = "";
+        updateStorageSummary();
+
+        const selectedVisibleCount = state.filteredItems.filter((item) => state.selectedIds.has(item.id)).length;
+        const visibleBytes = state.filteredItems.reduce((sum, item) => sum + (Number(item.byteLength) || 0), 0);
+        elements.historyStats.textContent =
+          `共 ${state.filteredItems.length} 张图片，约 ${formatBytes(visibleBytes)}；已选 ${state.selectedIds.size} 张，当前筛选命中 ${selectedVisibleCount} 张。`;
+
+        const totalPages = Math.max(1, Math.ceil(state.filteredItems.length / state.historyPageSize));
+        state.historyPage = Math.min(totalPages, Math.max(1, state.historyPage));
+        renderHistoryPagination(totalPages);
+
+        if (state.filteredItems.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-history";
+          empty.textContent = "当前没有匹配到任何图片。试试换个关键词，或者先生成一张。";
+          elements.historyGrid.appendChild(empty);
+          renderPreview();
+          return;
+        }
+
+        const startIndex = (state.historyPage - 1) * state.historyPageSize;
+        const pageItems = state.filteredItems.slice(startIndex, startIndex + state.historyPageSize);
+
+        for (const item of pageItems) {
+          const card = document.createElement("article");
+          card.className = "history-card";
+          if (item.id === state.activeId) {
+            card.classList.add("active");
+          }
+          if (state.selectedIds.has(item.id)) {
+            card.classList.add("selected");
+          }
+
+          const top = document.createElement("div");
+          top.className = "history-card-top";
+          const label = document.createElement("label");
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = state.selectedIds.has(item.id);
+          checkbox.addEventListener("click", (event) => event.stopPropagation());
+          checkbox.addEventListener("change", () => {
+            if (checkbox.checked) {
+              state.selectedIds.add(item.id);
+            } else {
+              state.selectedIds.delete(item.id);
+            }
+            renderHistory();
+          });
+          label.appendChild(checkbox);
+          top.appendChild(label);
+          top.appendChild(createChip(item.persistent ? item.size : "url-only", !item.persistent));
+
+          const image = document.createElement("img");
+          image.alt = item.fileName;
+          image.src = item.previewSrc || item.remoteUrl || "";
+          image.title = "点击查看大图";
+          image.addEventListener("click", (event) => {
+            event.stopPropagation();
+            openImageViewer(item);
+          });
+
+          const titleWrap = document.createElement("div");
+          const title = document.createElement("h3");
+          title.className = "history-title";
+          title.textContent = trimText(item.prompt || item.fileName, 64);
+          titleWrap.appendChild(title);
+
+          const meta = document.createElement("div");
+          meta.className = "history-meta";
+          for (const text of [
+            item.quality,
+            item.responseFormat,
+            formatDate(item.createdAt, true),
+            item.persistent ? "local" : "remote",
+          ]) {
+            const span = document.createElement("span");
+            span.textContent = text;
+            meta.appendChild(span);
+          }
+
+          const footer = document.createElement("div");
+          footer.className = "history-card-footer";
+
+          const left = document.createElement("div");
+          left.className = "history-card-actions";
+
+          const sourceLink = document.createElement(item.remoteUrl ? "a" : "span");
+          if (item.remoteUrl) {
+            sourceLink.className = "card-link";
+            sourceLink.href = item.remoteUrl;
+            sourceLink.target = "_blank";
+            sourceLink.rel = "noreferrer";
+            sourceLink.textContent = "原始地址";
+          } else {
+            sourceLink.textContent = "本地记录";
+          }
+          left.appendChild(sourceLink);
+
+          const importButton = document.createElement("button");
+          importButton.type = "button";
+          importButton.className = "mini-action";
+          importButton.textContent = "做参考";
+          importButton.addEventListener("click", async (event) => {
+            event.stopPropagation();
+            await useItemAsReference(item);
+          });
+          left.appendChild(importButton);
+
+          const right = document.createElement("span");
+          right.textContent = formatBytes(item.byteLength);
+
+          footer.appendChild(left);
+          footer.appendChild(right);
+
+          card.appendChild(top);
+          card.appendChild(image);
+          card.appendChild(titleWrap);
+          card.appendChild(meta);
+          card.appendChild(footer);
+
+          card.addEventListener("click", () => {
+            state.activeId = item.id;
+            state.previewFlipped = false;
+            renderHistory();
+            renderPreview();
+          });
+
+          elements.historyGrid.appendChild(card);
+        }
+
+        renderPreview();
+      }
+
+      function renderHistoryPagination(totalPages) {
+        elements.historyPagination.innerHTML = "";
+        if (state.filteredItems.length === 0) {
+          return;
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "history-page-meta";
+        meta.textContent = `第 ${state.historyPage} / ${totalPages} 页，每页 ${state.historyPageSize} 张`;
+
+        const actions = document.createElement("div");
+        actions.className = "preview-actions";
+
+        const prev = document.createElement("button");
+        prev.type = "button";
+        prev.className = "ghost-button";
+        prev.textContent = "上一页";
+        prev.disabled = state.historyPage <= 1;
+        prev.addEventListener("click", () => {
+          state.historyPage = Math.max(1, state.historyPage - 1);
+          renderHistory();
+        });
+
+        const next = document.createElement("button");
+        next.type = "button";
+        next.className = "ghost-button";
+        next.textContent = "下一页";
+        next.disabled = state.historyPage >= totalPages;
+        next.addEventListener("click", () => {
+          state.historyPage = Math.min(totalPages, state.historyPage + 1);
+          renderHistory();
+        });
+
+        actions.appendChild(prev);
+        actions.appendChild(next);
+        elements.historyPagination.appendChild(meta);
+        elements.historyPagination.appendChild(actions);
+      }
+
+      function openImageViewer(item) {
+        if (!item || !(item.previewSrc || item.remoteUrl)) {
+          return;
+        }
+
+        const src = item.previewSrc || item.remoteUrl;
+        elements.viewerImage.removeAttribute("src");
+        elements.viewerImage.src = src;
+        elements.viewerImage.alt = item.prompt || item.fileName;
+        elements.viewerTitle.textContent = item.fileName || "大图浏览";
+        elements.imageViewerModal.classList.remove("hidden");
+        elements.viewerHint.textContent = "滚轮缩放，按住拖动平移，双击可回到适应窗口。";
+        state.viewerPanX = 0;
+        state.viewerPanY = 0;
+        state.viewerScale = 1;
+        state.viewerMode = "fit";
+        state.viewerNaturalWidth = 0;
+        state.viewerNaturalHeight = 0;
+        elements.viewerCanvas.classList.remove("is-dragging");
+        if (elements.viewerImage.complete && elements.viewerImage.naturalWidth) {
+          state.viewerNaturalWidth = elements.viewerImage.naturalWidth;
+          state.viewerNaturalHeight = elements.viewerImage.naturalHeight;
+          fitViewerToStage(true);
+        }
+      }
+
+      function closeImageViewer() {
+        state.viewerDragging = false;
+        state.viewerPointerId = null;
+        elements.viewerCanvas.classList.remove("is-dragging");
+        elements.imageViewerModal.classList.add("hidden");
+      }
+
+      function getViewerFitScale() {
+        const stageWidth = elements.viewerCanvas.clientWidth || 1;
+        const stageHeight = elements.viewerCanvas.clientHeight || 1;
+        const naturalWidth = state.viewerNaturalWidth || 1;
+        const naturalHeight = state.viewerNaturalHeight || 1;
+        return Math.max(0.05, Math.min(stageWidth / naturalWidth, stageHeight / naturalHeight));
+      }
+
+      function fitViewerToStage(resetPan = true) {
+        if (!state.viewerNaturalWidth || !state.viewerNaturalHeight) {
+          return;
+        }
+
+        state.viewerFitScale = getViewerFitScale();
+        state.viewerMode = "fit";
+        state.viewerScale = state.viewerFitScale;
+        if (resetPan) {
+          state.viewerPanX = 0;
+          state.viewerPanY = 0;
+        }
+        applyViewerTransform();
+      }
+
+      function setViewerScale(nextScale, { mode = "free", clientX = null, clientY = null } = {}) {
+        const fitScale = getViewerFitScale();
+        const safeScale = Math.min(8, Math.max(0.05, Number(nextScale) || fitScale));
+
+        if (clientX != null && clientY != null) {
+          const rect = elements.viewerCanvas.getBoundingClientRect();
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const localX = clientX - rect.left - centerX - state.viewerPanX;
+          const localY = clientY - rect.top - centerY - state.viewerPanY;
+          const imageX = localX / state.viewerScale;
+          const imageY = localY / state.viewerScale;
+
+          state.viewerPanX = clientX - rect.left - centerX - imageX * safeScale;
+          state.viewerPanY = clientY - rect.top - centerY - imageY * safeScale;
+        }
+
+        state.viewerScale = safeScale;
+        state.viewerFitScale = fitScale;
+        state.viewerMode = mode === "fit" ? "fit" : "free";
+        clampViewerPan();
+        applyViewerTransform();
+      }
+
+      function zoomViewerAt(factor, clientX, clientY) {
+        const nextScale = state.viewerScale * factor;
+        setViewerScale(nextScale, { mode: "free", clientX, clientY });
+      }
+
+      function clampViewerPan() {
+        const stageWidth = elements.viewerCanvas.clientWidth || 0;
+        const stageHeight = elements.viewerCanvas.clientHeight || 0;
+        const imageWidth = (state.viewerNaturalWidth || 0) * state.viewerScale;
+        const imageHeight = (state.viewerNaturalHeight || 0) * state.viewerScale;
+        const maxPanX = Math.max(0, (imageWidth - stageWidth) / 2);
+        const maxPanY = Math.max(0, (imageHeight - stageHeight) / 2);
+
+        state.viewerPanX = Math.min(maxPanX, Math.max(-maxPanX, state.viewerPanX));
+        state.viewerPanY = Math.min(maxPanY, Math.max(-maxPanY, state.viewerPanY));
+      }
+
+      function applyViewerTransform() {
+        if (!state.viewerNaturalWidth || !state.viewerNaturalHeight) {
+          return;
+        }
+
+        clampViewerPan();
+        elements.viewerImage.style.transform = `translate(-50%, -50%) translate(${state.viewerPanX}px, ${state.viewerPanY}px) scale(${state.viewerScale})`;
+        const percent = Math.round(state.viewerScale * 100);
+        elements.zoomPercent.textContent = state.viewerMode === "fit" ? `适应 ${percent}%` : `${percent}%`;
+      }
+
+      function scheduleViewerTransform() {
+        if (viewerTransformFrame) {
+          return;
+        }
+
+        viewerTransformFrame = window.requestAnimationFrame(() => {
+          viewerTransformFrame = null;
+          applyViewerTransform();
+        });
+      }
+
+      function handleViewerPointerDown(event) {
+        if (event.button !== 0) {
+          return;
+        }
+
+        if (!state.viewerNaturalWidth || !state.viewerNaturalHeight) {
+          return;
+        }
+
+        state.viewerDragging = true;
+        state.viewerPointerId = event.pointerId;
+        state.viewerDragStartX = event.clientX;
+        state.viewerDragStartY = event.clientY;
+        state.viewerDragOriginX = state.viewerPanX;
+        state.viewerDragOriginY = state.viewerPanY;
+        state.viewerMode = "free";
+        elements.viewerCanvas.classList.add("is-dragging");
+        elements.viewerCanvas.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      }
+
+      function handleViewerPointerMove(event) {
+        if (!state.viewerDragging || event.pointerId !== state.viewerPointerId) {
+          return;
+        }
+
+        const deltaX = event.clientX - state.viewerDragStartX;
+        const deltaY = event.clientY - state.viewerDragStartY;
+        state.viewerPanX = state.viewerDragOriginX + deltaX;
+        state.viewerPanY = state.viewerDragOriginY + deltaY;
+        scheduleViewerTransform();
+        event.preventDefault();
+      }
+
+      function handleViewerPointerUp(event) {
+        if (event.pointerId != null && state.viewerPointerId != null && event.pointerId !== state.viewerPointerId) {
+          return;
+        }
+
+        state.viewerDragging = false;
+        state.viewerPointerId = null;
+        elements.viewerCanvas.classList.remove("is-dragging");
+        if (viewerTransformFrame) {
+          window.cancelAnimationFrame(viewerTransformFrame);
+          viewerTransformFrame = null;
+        }
+        applyViewerTransform();
+      }
+
+      async function deleteSelected() {
+        const ids = Array.from(state.selectedIds);
+        if (ids.length === 0) {
+          showToast("请先选择要删除的图片。");
+          return;
+        }
+
+        if (!window.confirm(`确定删除所选 ${ids.length} 条历史吗？这会移除浏览器本地缓存。`)) {
+          return;
+        }
+
+        await deleteHistoryItems(ids);
+        state.history = state.history.filter((item) => !state.selectedIds.has(item.id));
+        state.selectedIds.clear();
+        state.activeId = state.history[0]?.id || null;
+        state.previewFlipped = false;
+        state.historyPage = 1;
+        filterHistory();
+        renderHistory();
+        renderPreview();
+        showToast(`已删除 ${ids.length} 条记录。`);
+      }
+
+      async function clearAllHistory() {
+        if (state.history.length === 0) {
+          showToast("当前没有可清理的浏览器缓存。");
+          return;
+        }
+
+        if (!window.confirm(`确定清空全部 ${state.history.length} 条本地缓存吗？这会移除浏览器里的所有历史图片。`)) {
+          return;
+        }
+
+        await deleteHistoryItems(state.history.map((item) => item.id));
+        state.history = [];
+        state.filteredItems = [];
+        state.selectedIds.clear();
+        state.activeId = null;
+        state.historyPage = 1;
+        updateStorageSummary();
+        renderHistory();
+        showToast("已清空全部浏览器缓存。");
+      }
+
+      async function exportSelected() {
+        const ids = Array.from(state.selectedIds);
+        if (ids.length === 0) {
+          showToast("请先选择要导出的图片。");
+          return;
+        }
+
+        const selected = state.history.filter((item) => state.selectedIds.has(item.id));
+        const manifest = {
+          exportedAt: new Date().toISOString(),
+          count: selected.length,
+          items: selected.map((item) => ({
+            id: item.id,
+            fileName: item.fileName,
+            prompt: item.prompt,
+            size: item.size,
+            quality: item.quality,
+            responseFormat: item.responseFormat,
+            persistent: item.persistent,
+            remoteUrl: item.remoteUrl,
+            warning: item.warning,
+          })),
+        };
+
+        if (typeof window.showDirectoryPicker === "function") {
+          try {
+            await exportToPickedDirectory(selected, manifest);
+            showToast(`已写入所选文件夹，共 ${selected.length} 项。`);
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") {
+              showToast("已取消选择导出文件夹。");
+              return;
+            }
+            showToast(`写入文件夹失败，改为浏览器下载。原因：${error.message || error}`);
+          }
+        }
+
+        await downloadExportBundle(selected, manifest);
+        showToast(`已触发 ${selected.length} 项下载。若浏览器拦截多文件下载，请手动允许。`);
+      }
+
+      async function exportToPickedDirectory(items, manifest) {
+        const dir = await window.showDirectoryPicker({ mode: "readwrite" });
+
+        for (const item of items) {
+          const fileName = sanitizeFileName(item.fileName || `image-${item.id}.png`);
+          const fileHandle = await dir.getFileHandle(fileName, { create: true });
+          const writable = await fileHandle.createWritable();
+          const blob = await recordToBlob(item);
+          await writable.write(blob);
+          await writable.close();
+        }
+
+        const manifestHandle = await dir.getFileHandle("manifest.json", { create: true });
+        const manifestWritable = await manifestHandle.createWritable();
+        await manifestWritable.write(JSON.stringify(manifest, null, 2));
+        await manifestWritable.close();
+      }
+
+      async function downloadExportBundle(items, manifest) {
+        for (const item of items) {
+          try {
+            const blob = await recordToBlob(item);
+            triggerBlobDownload(blob, sanitizeFileName(item.fileName || `image-${item.id}.png`));
+            await wait(120);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+        triggerBlobDownload(manifestBlob, `manifest-${formatCompactDate(new Date())}.json`);
+      }
+
+      async function recordToBlob(item) {
+        if (item.dataUrl) {
+          return dataUrlToBlob(item.dataUrl);
+        }
+
+        if (item.remoteUrl) {
+          const response = await fetch(item.remoteUrl, { mode: "cors" });
+          if (!response.ok) {
+            throw new Error(`下载远程图片失败：HTTP ${response.status}`);
+          }
+          return response.blob();
+        }
+
+        throw new Error("当前记录没有可导出的图片数据。");
+      }
+
+      function triggerBlobDownload(blob, fileName) {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = fileName;
+        anchor.style.display = "none";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
+
+      function createChip(text, olive = false) {
+        const span = document.createElement("span");
+        span.className = olive ? "meta-chip olive" : "meta-chip";
+        span.textContent = text;
+        return span;
+      }
+
+      async function copyText(text, successMessage = "已复制。") {
+        try {
+          const plainText = String(text || "");
+
+          if (navigator.clipboard?.writeText && window.isSecureContext) {
+            await navigator.clipboard.writeText(plainText);
+          } else {
+            fallbackCopyText(plainText);
+          }
+          showToast(successMessage);
+        } catch {
+          try {
+            fallbackCopyText(String(text || ""));
+            showToast(successMessage);
+          } catch {
+            showToast("浏览器未允许剪贴板访问。");
+          }
+        }
+      }
+
+      function fallbackCopyText(text) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const ok = document.execCommand("copy");
+        textarea.remove();
+
+        if (!ok) {
+          throw new Error("copy failed");
+        }
+      }
+
+      function showToast(message) {
+        elements.toast.textContent = message;
+        elements.toast.classList.remove("hidden");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          elements.toast.classList.add("hidden");
+        }, 3200);
+      }
+
+      function sanitizeFileName(name) {
+        return String(name || "image.png")
+          .replace(/[<>:"/\\|?*\x00-\x1f]+/g, "-")
+          .replace(/\s+/g, "-");
+      }
+
+      function clampNumber(value, min, max, fallback) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+          return fallback;
+        }
+        return Math.min(max, Math.max(min, Math.round(numeric)));
+      }
+
+      function trimText(value, maxLength) {
+        const text = String(value || "");
+        return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+      }
+
+      function formatDate(value, compact = false) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return value || "-";
+        }
+        return new Intl.DateTimeFormat("zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          ...(compact ? {} : { year: "numeric" }),
+        }).format(date);
+      }
+
+      function formatCompactDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+        const second = String(date.getSeconds()).padStart(2, "0");
+        return `${year}${month}${day}-${hour}${minute}${second}`;
+      }
+
+      function formatBytes(bytes) {
+        const value = Number(bytes) || 0;
+        if (value < 1024) {
+          return `${value} B`;
+        }
+        if (value < 1024 * 1024) {
+          return `${(value / 1024).toFixed(1)} KB`;
+        }
+        return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+      }
+
+      function estimateBase64Bytes(base64) {
+        const cleaned = String(base64 || "").replace(/=+$/, "");
+        return Math.floor((cleaned.length * 3) / 4);
+      }
+
+      function mimeTypeToExtension(mimeType) {
+        const type = String(mimeType || "").toLowerCase();
+        if (type.includes("jpeg")) return "jpg";
+        if (type.includes("webp")) return "webp";
+        if (type.includes("gif")) return "gif";
+        return "png";
+      }
+
+      function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error || new Error("Blob 转 data URL 失败。"));
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      function dataUrlToBlob(dataUrl) {
+        const [prefix, data] = String(dataUrl).split(",", 2);
+        const mimeMatch = prefix.match(/^data:(.*?);base64$/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+        const binary = atob(data || "");
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: mimeType });
+      }
+
+      function wait(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+    </script>
+  </body>
+</html>
